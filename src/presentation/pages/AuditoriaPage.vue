@@ -292,14 +292,14 @@ select.filter-input {
 }
 
 .badge-eliminar {
-    background: rgba(229, 62, 62, 0.15);
+    background: rgba(var(--color-danger-rgb), 0.15);
     color: #c53030;
 }
 
 .error-banner {
     color: var(--color-danger);
-    background: rgba(229, 62, 62, 0.1);
-    border: 1px solid rgba(229, 62, 62, 0.3);
+    background: rgba(var(--color-danger-rgb), 0.1);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.3);
     padding: 0.75rem 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;

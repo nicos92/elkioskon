@@ -139,7 +139,7 @@ function toNumber(value: string): number {
 }
 
 .stock-warning-row td {
-    background: rgba(229, 62, 62, 0.06);
+    background: rgba(var(--color-danger-rgb), 0.06);
 }
 
 .stock-warning {

@@ -146,8 +146,8 @@ button:not(.btn-icon).btn-danger {
 
 .error-banner {
   color: var(--color-danger);
-  background: rgba(229, 62, 62, 0.1);
-  border: 1px solid rgba(229, 62, 62, 0.3);
+  background: rgba(var(--color-danger-rgb), 0.1);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.3);
   padding: 0.75rem 1rem;
   border-radius: 6px;
   margin-bottom: 1rem;
@@ -181,6 +181,10 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+html {
+  --color-primary: #3f2281;
+}
+
 html[data-theme="light"] {
   color-scheme: light;
   --color-bg: #f3f4f6;
@@ -189,9 +193,9 @@ html[data-theme="light"] {
   --color-text: #111827;
   --color-text-muted: #6b7280;
   --color-border: #e5e7eb;
-  --color-primary: #3f2281;
-  --color-secondary: var(--color-secondary);
-  --color-danger: var(--color-danger);
+  --color-secondary: #5a3aa6;
+  --color-danger: #e53e3e;
+  --color-danger-rgb: 229, 62, 62;
 }
 
 html[data-theme="dark"] {
@@ -202,9 +206,9 @@ html[data-theme="dark"] {
   --color-text: #e5e7eb;
   --color-text-muted: #94a3b8;
   --color-border: #1f2937;
-  --color-primary: #3f2281;
-  --color-secondary: var(--color-secondary);
-  --color-danger: var(--color-danger);
+  --color-secondary: #5a3aa6;
+  --color-danger: #e53e3e;
+  --color-danger-rgb: 229, 62, 62;
 }
 
 .print-area {

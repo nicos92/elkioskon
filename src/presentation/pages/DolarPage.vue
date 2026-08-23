@@ -222,7 +222,7 @@ onMounted(async () => {
 .btn-delete {
     background: transparent;
     color: var(--color-danger);
-    border: 1px solid rgba(229, 62, 62, 0.4);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.4);
     padding: 0.4rem 0.9rem;
     border-radius: 6px;
     cursor: pointer;
@@ -230,7 +230,7 @@ onMounted(async () => {
 }
 
 .btn-delete:hover:not(:disabled) {
-    background: rgba(229, 62, 62, 0.1);
+    background: rgba(var(--color-danger-rgb), 0.1);
 }
 
 .btn-delete:disabled {
@@ -326,8 +326,8 @@ onMounted(async () => {
 
 .error-banner {
     color: var(--color-danger);
-    background: rgba(229, 62, 62, 0.1);
-    border: 1px solid rgba(229, 62, 62, 0.3);
+    background: rgba(var(--color-danger-rgb), 0.1);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.3);
     padding: 0.75rem 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;

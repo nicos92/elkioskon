@@ -529,8 +529,8 @@ function generarPdf() {
 
 .dia-cerrado-banner {
     color: var(--color-danger);
-    background: rgba(229, 62, 62, 0.1);
-    border: 1px solid rgba(229, 62, 62, 0.3);
+    background: rgba(var(--color-danger-rgb), 0.1);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.3);
     padding: 0.75rem 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;
@@ -703,8 +703,8 @@ function generarPdf() {
 
 .error-banner {
     color: var(--color-danger);
-    background: rgba(229, 62, 62, 0.1);
-    border: 1px solid rgba(229, 62, 62, 0.3);
+    background: rgba(var(--color-danger-rgb), 0.1);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.3);
     padding: 0.75rem 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;
