@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::application::services::{log_audit, TipoVentaService};
 use crate::api::commands::permissions::check_permission;
+use crate::application::services::{log_audit, TipoVentaService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, TipoVenta};
 use crate::infrastructure::error::AppError;
 
@@ -59,7 +59,10 @@ pub fn create_tipo_venta(
         user_id,
         AuditScreen::TiposVenta,
         AuditAction::Create,
-        Some(format!("Tipo de venta: {} (id {})", result.nombre, result.id)),
+        Some(format!(
+            "Tipo de venta: {} (id {})",
+            result.nombre, result.id
+        )),
     )?;
     Ok(result)
 }
@@ -81,7 +84,10 @@ pub fn update_tipo_venta(
         user_id,
         AuditScreen::TiposVenta,
         AuditAction::Update,
-        Some(format!("Tipo de venta: {} (id {})", result.nombre, result.id)),
+        Some(format!(
+            "Tipo de venta: {} (id {})",
+            result.nombre, result.id
+        )),
     )?;
     Ok(result)
 }

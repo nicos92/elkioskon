@@ -1,8 +1,6 @@
 use rusqlite::params;
 
-use crate::domain::entities::{
-    Venta, VentaDetalle, VentaDetalleConArticulo, VentaWithDetalle,
-};
+use crate::domain::entities::{Venta, VentaDetalle, VentaDetalleConArticulo, VentaWithDetalle};
 use crate::domain::repositories::{Page, VentaRepository};
 use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
@@ -192,9 +190,7 @@ impl VentaRepository for SqliteVentaRepository {
         let limit = limit.max(1);
         let offset = offset.max(0);
 
-        let total: i64 = conn.query_row("SELECT COUNT(*) FROM ventas", [], |row| {
-            row.get(0)
-        })?;
+        let total: i64 = conn.query_row("SELECT COUNT(*) FROM ventas", [], |row| row.get(0))?;
 
         let mut stmt = conn.prepare(
             "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
@@ -219,10 +215,7 @@ impl VentaRepository for SqliteVentaRepository {
         if !ids.is_empty() {
             let items = self.load_items_bulk(&conn, &ids)?;
             for venta in ventas.iter_mut() {
-                venta.items = items
-                    .get(&venta.id)
-                    .cloned()
-                    .unwrap_or_default();
+                venta.items = items.get(&venta.id).cloned().unwrap_or_default();
                 venta.subtotal = venta.items.iter().map(|i| i.subtotal).sum();
             }
         }
@@ -285,10 +278,7 @@ impl VentaRepository for SqliteVentaRepository {
 }
 
 impl SqliteVentaRepository {
-    fn is_dia_cerrado(
-        conn: &rusqlite::Connection,
-        fecha_local: &str,
-    ) -> Result<bool, AppError> {
+    fn is_dia_cerrado(conn: &rusqlite::Connection, fecha_local: &str) -> Result<bool, AppError> {
         let count: i64 = conn.query_row(
             "SELECT COUNT(*) FROM cierres WHERE fecha = ?1",
             params![fecha_local],
@@ -300,7 +290,10 @@ impl SqliteVentaRepository {
     fn utc_to_local_date(utc_rfc3339: &str) -> Result<String, AppError> {
         let dt = chrono::DateTime::parse_from_rfc3339(utc_rfc3339)
             .map_err(|e| AppError::Internal(format!("Fecha inválida: {}", e)))?;
-        Ok(dt.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string())
+        Ok(dt
+            .with_timezone(&chrono::Local)
+            .format("%Y-%m-%d")
+            .to_string())
     }
 
     fn row_to_venta(&self, row: &rusqlite::Row) -> Result<VentaWithDetalle, AppError> {
@@ -396,8 +389,10 @@ impl SqliteVentaRepository {
             placeholders.join(", ")
         );
 
-        let params_vec: Vec<&dyn rusqlite::ToSql> =
-            venta_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+        let params_vec: Vec<&dyn rusqlite::ToSql> = venta_ids
+            .iter()
+            .map(|id| id as &dyn rusqlite::ToSql)
+            .collect();
 
         let mut stmt = conn.prepare(&sql)?;
         let mut rows = stmt.query(rusqlite::params_from_iter(params_vec))?;
@@ -441,11 +436,9 @@ mod tests {
 
     fn admin_user_id() -> i64 {
         let conn = DB.lock().unwrap();
-        conn.query_row(
-            "SELECT id FROM users WHERE username = 'admin'",
-            [],
-            |row| row.get(0),
-        )
+        conn.query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+            row.get(0)
+        })
         .unwrap()
     }
 
@@ -464,11 +457,9 @@ mod tests {
     fn venta_con_detalle(cliente_id: i64) -> VentaWithDetalle {
         let id_articulo: i64 = {
             let conn = DB.lock().unwrap();
-            conn.query_row(
-                "SELECT id_articulo FROM stock LIMIT 1",
-                [],
-                |row| row.get(0),
-            )
+            conn.query_row("SELECT id_articulo FROM stock LIMIT 1", [], |row| {
+                row.get(0)
+            })
             .unwrap()
         };
 

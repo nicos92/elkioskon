@@ -1,4 +1,4 @@
-use crate::domain::entities::{CostUpdateOperation, CostUpdateItem};
+use crate::domain::entities::{CostUpdateItem, CostUpdateOperation};
 use crate::infrastructure::error::AppError;
 
 #[derive(Debug, Clone)]
@@ -25,10 +25,7 @@ pub trait CostUpdateRepository: Send + Sync {
 
     fn find_last_undoable(&self) -> Result<Option<CostUpdateOperation>, AppError>;
 
-    fn find_items_by_operation(
-        &self,
-        operation_id: i64,
-    ) -> Result<Vec<CostUpdateItem>, AppError>;
+    fn find_items_by_operation(&self, operation_id: i64) -> Result<Vec<CostUpdateItem>, AppError>;
 
     fn undo_operation(&self, operation_id: i64) -> Result<CostUpdateUndoResult, AppError>;
 

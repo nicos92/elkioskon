@@ -187,11 +187,9 @@ mod tests {
     fn insert_venta_for_articulo(id_articulo: i64) {
         let conn = DB.lock().unwrap();
         let user_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'admin'",
-                [],
-                |row| row.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+                row.get(0)
+            })
             .unwrap();
         let now = chrono::Utc::now().to_rfc3339();
         conn.execute(
@@ -386,9 +384,7 @@ mod tests {
         let cats = cat_repo.find_all().unwrap();
         let cat = cats.iter().find(|c| c.categoria == "Cat Prev").unwrap();
 
-        let previews = service
-            .get_preview(20.0, Some(cat.id), None, None)
-            .unwrap();
+        let previews = service.get_preview(20.0, Some(cat.id), None, None).unwrap();
         assert_eq!(previews.len(), 1);
         assert!((previews[0].costo_actual - 1000.0).abs() < 0.01);
         assert!((previews[0].costo_nuevo - 1200.0).abs() < 0.01);

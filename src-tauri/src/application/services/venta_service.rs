@@ -79,7 +79,8 @@ impl VentaService {
         );
         venta.id_tipo_venta = id_tipo_venta;
         venta.cliente_id = cliente_id;
-        self.repository.create(&venta, &detalles, allow_negative_stock)
+        self.repository
+            .create(&venta, &detalles, allow_negative_stock)
     }
 
     pub fn get_all(&self) -> Result<Vec<VentaWithDetalle>, AppError> {
@@ -96,7 +97,10 @@ impl VentaService {
             .ok_or(AppError::VentaNotFound)
     }
 
-    pub fn get_ventas_por_cliente(&self, cliente_id: i64) -> Result<Vec<VentaWithDetalle>, AppError> {
+    pub fn get_ventas_por_cliente(
+        &self,
+        cliente_id: i64,
+    ) -> Result<Vec<VentaWithDetalle>, AppError> {
         self.cliente_repository
             .find_by_id(cliente_id)?
             .ok_or(AppError::ClienteNotFound)?;
@@ -117,7 +121,13 @@ mod tests {
     use mockall::predicate::*;
 
     fn cliente_with_id(id: i64, nombre: &str, apellido: &str) -> Cliente {
-        let mut c = Cliente::new(Some(nombre.to_string()), Some(apellido.to_string()), None, None, None);
+        let mut c = Cliente::new(
+            Some(nombre.to_string()),
+            Some(apellido.to_string()),
+            None,
+            None,
+            None,
+        );
         c.id = id;
         c
     }
@@ -145,27 +155,28 @@ mod tests {
     #[test]
     fn create_without_cliente_resolves_default() {
         let mut venta_repo = MockVentaRepository::new();
-        venta_repo.expect_create().returning(|v, _d, _n| {
-            Ok(venta_result(1, v.cliente_id, v.descuento))
-        });
+        venta_repo
+            .expect_create()
+            .returning(|v, _d, _n| Ok(venta_result(1, v.cliente_id, v.descuento)));
 
         let mut cliente_repo = MockClienteRepository::new();
         cliente_repo
             .expect_find_default()
             .return_once(|| Ok(Some(cliente_with_id(7, "Consumidor", "Final"))));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
-        let result = service.create(1, vec![], 0.0, None, None, None, true).unwrap();
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let result = service
+            .create(1, vec![], 0.0, None, None, None, true)
+            .unwrap();
         assert_eq!(result.cliente_id, 7);
     }
 
     #[test]
     fn create_with_explicit_cliente_id_uses_it() {
         let mut venta_repo = MockVentaRepository::new();
-        venta_repo.expect_create().returning(|v, _d, _n| {
-            Ok(venta_result(1, v.cliente_id, v.descuento))
-        });
+        venta_repo
+            .expect_create()
+            .returning(|v, _d, _n| Ok(venta_result(1, v.cliente_id, v.descuento)));
 
         let mut cliente_repo = MockClienteRepository::new();
         cliente_repo
@@ -173,9 +184,10 @@ mod tests {
             .with(eq(5))
             .return_once(|_| Ok(Some(cliente_with_id(5, "Juan", "Pérez"))));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
-        let result = service.create(1, vec![], 10.0, None, None, Some(5), true).unwrap();
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let result = service
+            .create(1, vec![], 10.0, None, None, Some(5), true)
+            .unwrap();
         assert_eq!(result.cliente_id, 5);
         assert_eq!(result.descuento, 10.0);
     }
@@ -190,9 +202,10 @@ mod tests {
             .with(eq(999))
             .return_once(|_| Ok(None));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
-        let err = service.create(1, vec![], 0.0, None, None, Some(999), true).unwrap_err();
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let err = service
+            .create(1, vec![], 0.0, None, None, Some(999), true)
+            .unwrap_err();
         assert!(matches!(err, AppError::ClienteNotFound));
     }
 
@@ -203,9 +216,10 @@ mod tests {
         let mut cliente_repo = MockClienteRepository::new();
         cliente_repo.expect_find_default().return_once(|| Ok(None));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
-        let err = service.create(1, vec![], 0.0, None, None, None, true).unwrap_err();
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let err = service
+            .create(1, vec![], 0.0, None, None, None, true)
+            .unwrap_err();
         assert!(matches!(err, AppError::ClienteDefectoNotFound));
     }
 
@@ -223,8 +237,7 @@ mod tests {
             .with(eq(5))
             .return_once(|_| Ok(Some(cliente_with_id(5, "Juan", "Pérez"))));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
         let ventas = service.get_ventas_por_cliente(5).unwrap();
         assert_eq!(ventas.len(), 1);
         assert_eq!(ventas[0].cliente_id, 5);
@@ -240,8 +253,7 @@ mod tests {
             .with(eq(42))
             .return_once(|_| Ok(None));
 
-        let service =
-            VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
+        let service = VentaService::with_repositories(Arc::new(venta_repo), Arc::new(cliente_repo));
         let err = service.get_ventas_por_cliente(42).unwrap_err();
         assert!(matches!(err, AppError::ClienteNotFound));
     }

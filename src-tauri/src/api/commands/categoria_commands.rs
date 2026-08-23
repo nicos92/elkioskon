@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::application::services::{log_audit, CategoriaService};
 use crate::api::commands::permissions::check_permission;
+use crate::application::services::{log_audit, CategoriaService};
 use crate::domain::entities::{AuditAction, AuditScreen, Categoria, PermissionCode};
 use crate::infrastructure::error::AppError;
 
@@ -64,7 +64,10 @@ pub fn create_categoria(
         user_id,
         AuditScreen::Categorias,
         AuditAction::Create,
-        Some(format!("Categoría: {} (id {})", result.categoria, result.id)),
+        Some(format!(
+            "Categoría: {} (id {})",
+            result.categoria, result.id
+        )),
     )?;
     Ok(result)
 }
@@ -85,7 +88,10 @@ pub fn update_categoria(
         user_id,
         AuditScreen::Categorias,
         AuditAction::Update,
-        Some(format!("Categoría: {} (id {})", result.categoria, result.id)),
+        Some(format!(
+            "Categoría: {} (id {})",
+            result.categoria, result.id
+        )),
     )?;
     Ok(result)
 }

@@ -3,9 +3,7 @@ use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
 use crate::application::services::{log_audit, CierreService};
-use crate::domain::entities::{
-    AuditAction, AuditScreen, CierreWithTipos, PermissionCode,
-};
+use crate::domain::entities::{AuditAction, AuditScreen, CierreWithTipos, PermissionCode};
 use crate::domain::repositories::Page;
 use crate::infrastructure::error::AppError;
 

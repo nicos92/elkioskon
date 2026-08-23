@@ -38,12 +38,7 @@ impl PresupuestoRepository for SqlitePresupuestoRepository {
             let stock = tx.query_row(
                 "SELECT costo, ganancia FROM stock WHERE id_articulo = ?1",
                 params![detalle.id_articulo],
-                |row| {
-                    Ok((
-                        row.get::<_, f64>(0)?,
-                        row.get::<_, f64>(1)?,
-                    ))
-                },
+                |row| Ok((row.get::<_, f64>(0)?, row.get::<_, f64>(1)?)),
             );
 
             let (costo, ganancia) = match stock {
@@ -140,12 +135,12 @@ impl PresupuestoRepository for SqlitePresupuestoRepository {
              {}",
             where_clause
         );
-        let count_params: Vec<&dyn rusqlite::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
-        let total: i64 =
-            conn.query_row(&count_sql, rusqlite::params_from_iter(count_params), |row| {
-                row.get(0)
-            })?;
+        let count_params: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let total: i64 = conn.query_row(
+            &count_sql,
+            rusqlite::params_from_iter(count_params),
+            |row| row.get(0),
+        )?;
 
         let sql = format!(
             "SELECT p.id, p.user_id, COALESCE(u.username, ''), p.fecha, p.total, p.descuento, p.estado, p.fecha_vencimiento, p.observacion, p.created_at, p.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
@@ -176,10 +171,7 @@ impl PresupuestoRepository for SqlitePresupuestoRepository {
         if !ids.is_empty() {
             let items = self.load_items_bulk(&conn, &ids)?;
             for presupuesto in presupuestos.iter_mut() {
-                presupuesto.items = items
-                    .get(&presupuesto.id)
-                    .cloned()
-                    .unwrap_or_default();
+                presupuesto.items = items.get(&presupuesto.id).cloned().unwrap_or_default();
                 presupuesto.subtotal = presupuesto.items.iter().map(|i| i.subtotal).sum();
             }
         }
@@ -254,7 +246,8 @@ fn build_filter_where(filter: &PresupuestoFilter) -> (String, Vec<Box<dyn rusqli
                      INNER JOIN articulos a ON a.id = d.id_articulo
                      WHERE d.id_presupuesto = p.id
                        AND (a.articulo LIKE ? OR a.cod_articulo LIKE ?)
-                 ))".to_string(),
+                 ))"
+                .to_string(),
             );
             for _ in 0..6 {
                 params.push(Box::new(like.clone()));
@@ -364,8 +357,10 @@ impl SqlitePresupuestoRepository {
             placeholders.join(", ")
         );
 
-        let params_vec: Vec<&dyn rusqlite::ToSql> =
-            presupuesto_ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+        let params_vec: Vec<&dyn rusqlite::ToSql> = presupuesto_ids
+            .iter()
+            .map(|id| id as &dyn rusqlite::ToSql)
+            .collect();
 
         let mut stmt = conn.prepare(&sql)?;
         let mut rows = stmt.query(rusqlite::params_from_iter(params_vec))?;
@@ -406,11 +401,9 @@ mod tests {
 
     fn admin_user_id() -> i64 {
         let conn = DB.lock().unwrap();
-        conn.query_row(
-            "SELECT id FROM users WHERE username = 'admin'",
-            [],
-            |row| row.get(0),
-        )
+        conn.query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+            row.get(0)
+        })
         .unwrap()
     }
 
@@ -685,8 +678,10 @@ mod tests {
         let p = presupuesto_con_detalle();
         let repo = SqlitePresupuestoRepository::new();
 
-        repo.update_estado(p.id, PresupuestoEstado::Aprobado).unwrap();
-        repo.update_estado(p.id, PresupuestoEstado::Anulado).unwrap();
+        repo.update_estado(p.id, PresupuestoEstado::Aprobado)
+            .unwrap();
+        repo.update_estado(p.id, PresupuestoEstado::Anulado)
+            .unwrap();
 
         let estado: String = DB
             .lock()
@@ -706,14 +701,16 @@ mod tests {
         let p = presupuesto_con_detalle();
         let repo = SqlitePresupuestoRepository::new();
 
-        repo.update_estado(p.id, PresupuestoEstado::Convertido).unwrap();
+        repo.update_estado(p.id, PresupuestoEstado::Convertido)
+            .unwrap();
         let err = repo
             .update_estado(p.id, PresupuestoEstado::Anulado)
             .unwrap_err();
         assert!(matches!(err, AppError::PresupuestoEstadoInvalido));
 
         let p2 = presupuesto_con_detalle();
-        repo.update_estado(p2.id, PresupuestoEstado::Anulado).unwrap();
+        repo.update_estado(p2.id, PresupuestoEstado::Anulado)
+            .unwrap();
         let err = repo
             .update_estado(p2.id, PresupuestoEstado::Pendiente)
             .unwrap_err();

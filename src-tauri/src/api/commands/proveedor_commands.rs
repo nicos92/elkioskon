@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::application::services::{log_audit, ProveedorService};
 use crate::api::commands::permissions::check_permission;
+use crate::application::services::{log_audit, ProveedorService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, Proveedor};
 use crate::infrastructure::error::AppError;
 

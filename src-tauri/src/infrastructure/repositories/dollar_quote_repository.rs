@@ -38,9 +38,7 @@ impl DollarQuoteRepository for SqliteDollarQuoteRepository {
         let tx = conn.transaction()?;
 
         let count: i64 =
-            tx.query_row("SELECT COUNT(*) FROM dollar_quotes", [], |row| {
-                row.get(0)
-            })?;
+            tx.query_row("SELECT COUNT(*) FROM dollar_quotes", [], |row| row.get(0))?;
 
         if count >= MAX_QUOTES as i64 {
             tx.execute(
@@ -101,10 +99,7 @@ impl DollarQuoteRepository for SqliteDollarQuoteRepository {
     fn delete_by_id(&self, id: i64) -> Result<(), AppError> {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let affected = conn.execute(
-            "DELETE FROM dollar_quotes WHERE id = ?1",
-            params![id],
-        )?;
+        let affected = conn.execute("DELETE FROM dollar_quotes WHERE id = ?1", params![id])?;
 
         if affected == 0 {
             return Err(AppError::DollarQuoteNotFound);
@@ -127,7 +122,12 @@ mod tests {
     }
 
     fn sample_quote(official_buy: f64) -> DollarQuote {
-        DollarQuote::new(official_buy, official_buy + 40.0, official_buy + 200.0, official_buy + 240.0)
+        DollarQuote::new(
+            official_buy,
+            official_buy + 40.0,
+            official_buy + 200.0,
+            official_buy + 240.0,
+        )
     }
 
     #[test]

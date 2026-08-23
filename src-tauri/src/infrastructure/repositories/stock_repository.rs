@@ -79,8 +79,9 @@ impl StockRepository for SqliteStockRepository {
     fn find_all(&self) -> Result<Vec<Stock>, AppError> {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let mut stmt = conn
-            .prepare("SELECT id, id_articulo, cantidad, costo, ganancia, updated_at FROM stock ORDER BY id")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, id_articulo, cantidad, costo, ganancia, updated_at FROM stock ORDER BY id",
+        )?;
 
         let mut stocks = Vec::new();
         let mut rows = stmt.query([])?;
@@ -203,7 +204,13 @@ impl StockRepository for SqliteStockRepository {
                    AND (?3 IS NULL OR sc.id = ?3)
                    AND (?4 IS NULL OR p.id = ?4)
              )",
-            params![porcentaje, id_categoria, id_sub_categoria, id_proveedor, now],
+            params![
+                porcentaje,
+                id_categoria,
+                id_sub_categoria,
+                id_proveedor,
+                now
+            ],
         )?;
 
         Ok(affected as i64)
@@ -338,11 +345,9 @@ mod tests {
     fn insert_venta_for_articulo(id_articulo: i64) {
         let conn = DB.lock().unwrap();
         let user_id: i64 = conn
-            .query_row(
-                "SELECT id FROM users WHERE username = 'admin'",
-                [],
-                |row| row.get(0),
-            )
+            .query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+                row.get(0)
+            })
             .unwrap();
         let now = chrono::Utc::now().to_rfc3339();
         conn.execute(
@@ -423,8 +428,7 @@ mod tests {
 
         repo.create(&Stock::new(art1.id, 10.0, 100.0, 25.0))
             .unwrap();
-        repo.create(&Stock::new(art2.id, 5.0, 200.0, 30.0))
-            .unwrap();
+        repo.create(&Stock::new(art2.id, 5.0, 200.0, 30.0)).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -453,8 +457,7 @@ mod tests {
 
         repo.create(&Stock::new(art1.id, 10.0, 1000.0, 20.0))
             .unwrap();
-        repo.create(&Stock::new(art2.id, 5.0, 500.0, 30.0))
-            .unwrap();
+        repo.create(&Stock::new(art2.id, 5.0, 500.0, 30.0)).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();

@@ -24,11 +24,10 @@ impl HomeService {
         let total_articulos: i64 =
             conn.query_row("SELECT COUNT(*) FROM articulos", [], |row| row.get(0))?;
 
-        let articulos_con_stock: i64 = conn.query_row(
-            "SELECT COUNT(DISTINCT id_articulo) FROM stock",
-            [],
-            |row| row.get(0),
-        )?;
+        let articulos_con_stock: i64 =
+            conn.query_row("SELECT COUNT(DISTINCT id_articulo) FROM stock", [], |row| {
+                row.get(0)
+            })?;
 
         let (total_usuarios, usuarios_activos): (i64, i64) = conn.query_row(
             "SELECT COUNT(*), COALESCE(SUM(active), 0) FROM users WHERE id != 1",
@@ -93,10 +92,9 @@ impl HomeService {
                 match categorias.iter_mut().find(|c| c.id == cat_id) {
                     Some(entry) => {
                         if let (Some(id), Some(sub_categoria)) = (sub_id, sub_nombre) {
-                            entry.sub_categorias.push(SubCategoriaInfo {
-                                id,
-                                sub_categoria,
-                            });
+                            entry
+                                .sub_categorias
+                                .push(SubCategoriaInfo { id, sub_categoria });
                         }
                     }
                     None => {
@@ -106,10 +104,9 @@ impl HomeService {
                             sub_categorias: Vec::new(),
                         };
                         if let (Some(id), Some(sub_categoria)) = (sub_id, sub_nombre) {
-                            entry.sub_categorias.push(SubCategoriaInfo {
-                                id,
-                                sub_categoria,
-                            });
+                            entry
+                                .sub_categorias
+                                .push(SubCategoriaInfo { id, sub_categoria });
                         }
                         categorias.push(entry);
                     }
@@ -137,7 +134,11 @@ impl HomeService {
 fn hoy_utc_range() -> (String, String) {
     let hoy = chrono::Local::now().date_naive();
     let inicio = local_to_utc(&hoy.and_hms_opt(0, 0, 0).unwrap());
-    let fin = local_to_utc(&(hoy + chrono::Duration::days(1)).and_hms_opt(0, 0, 0).unwrap());
+    let fin = local_to_utc(
+        &(hoy + chrono::Duration::days(1))
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+    );
     (inicio, fin)
 }
 

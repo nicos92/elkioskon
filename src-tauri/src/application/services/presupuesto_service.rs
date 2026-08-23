@@ -3,11 +3,11 @@ use std::sync::Arc;
 use crate::domain::entities::{
     Presupuesto, PresupuestoDetalle, PresupuestoEstado, PresupuestoWithDetalle,
 };
-use crate::domain::repositories::{ClienteRepository, Page, PresupuestoFilter, PresupuestoRepository};
-use crate::infrastructure::error::AppError;
-use crate::infrastructure::repositories::{
-    SqliteClienteRepository, SqlitePresupuestoRepository,
+use crate::domain::repositories::{
+    ClienteRepository, Page, PresupuestoFilter, PresupuestoRepository,
 };
+use crate::infrastructure::error::AppError;
+use crate::infrastructure::repositories::{SqliteClienteRepository, SqlitePresupuestoRepository};
 
 pub struct PresupuestoService {
     repository: Arc<dyn PresupuestoRepository>,
@@ -159,9 +159,7 @@ mod tests {
             Arc::new(presupuesto_repo),
             Arc::new(cliente_repo),
         );
-        let result = service
-            .create(1, vec![], 0.0, None, None, None)
-            .unwrap();
+        let result = service.create(1, vec![], 0.0, None, None, None).unwrap();
         assert_eq!(result.cliente_id, None);
     }
 

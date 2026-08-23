@@ -1,4 +1,6 @@
-use crate::domain::entities::{Presupuesto, PresupuestoDetalle, PresupuestoEstado, PresupuestoWithDetalle};
+use crate::domain::entities::{
+    Presupuesto, PresupuestoDetalle, PresupuestoEstado, PresupuestoWithDetalle,
+};
 use crate::domain::repositories::Page;
 use crate::infrastructure::error::AppError;
 
@@ -24,9 +26,5 @@ pub trait PresupuestoRepository: Send + Sync {
         limit: i64,
         offset: i64,
     ) -> Result<Page<PresupuestoWithDetalle>, AppError>;
-    fn update_estado(
-        &self,
-        id: i64,
-        estado: PresupuestoEstado,
-    ) -> Result<(), AppError>;
+    fn update_estado(&self, id: i64, estado: PresupuestoEstado) -> Result<(), AppError>;
 }

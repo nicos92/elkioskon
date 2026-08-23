@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::application::services::{log_audit, ArticuloService};
 use crate::api::commands::permissions::check_permission;
+use crate::application::services::{log_audit, ArticuloService};
 use crate::domain::entities::{Articulo, AuditAction, AuditScreen, PermissionCode};
 use crate::infrastructure::error::AppError;
 
@@ -75,7 +75,10 @@ pub fn create_articulo(
         user_id,
         AuditScreen::Articulos,
         AuditAction::Create,
-        Some(format!("Artículo: {} ({}) (id {})", result.articulo, result.cod_articulo, result.id)),
+        Some(format!(
+            "Artículo: {} ({}) (id {})",
+            result.articulo, result.cod_articulo, result.id
+        )),
     )?;
     Ok(result)
 }
@@ -102,7 +105,10 @@ pub fn update_articulo(
         user_id,
         AuditScreen::Articulos,
         AuditAction::Update,
-        Some(format!("Artículo: {} ({}) (id {})", result.articulo, result.cod_articulo, result.id)),
+        Some(format!(
+            "Artículo: {} ({}) (id {})",
+            result.articulo, result.cod_articulo, result.id
+        )),
     )?;
     Ok(result)
 }

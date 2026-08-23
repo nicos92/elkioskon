@@ -11,12 +11,7 @@ pub struct DollarQuote {
 }
 
 impl DollarQuote {
-    pub fn new(
-        official_buy: f64,
-        official_sell: f64,
-        blue_buy: f64,
-        blue_sell: f64,
-    ) -> Self {
+    pub fn new(official_buy: f64, official_sell: f64, blue_buy: f64, blue_sell: f64) -> Self {
         Self {
             id: 0,
             official_buy,

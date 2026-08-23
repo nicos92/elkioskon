@@ -51,10 +51,7 @@ impl AuditLogRepository for SqliteAuditLogRepository {
         )?;
 
         let id = conn.last_insert_rowid();
-        Ok(AuditLog {
-            id,
-            ..log.clone()
-        })
+        Ok(AuditLog { id, ..log.clone() })
     }
 
     fn find_with_filters(&self, filter: &AuditLogFilter) -> Result<Page<AuditLog>, AppError> {

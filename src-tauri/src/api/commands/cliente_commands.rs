@@ -105,7 +105,11 @@ pub fn crear_cliente(
         user_id,
         AuditScreen::Clientes,
         AuditAction::Create,
-        Some(format!("Cliente: {} (id {})", result.nombre.as_deref().unwrap_or(""), result.id)),
+        Some(format!(
+            "Cliente: {} (id {})",
+            result.nombre.as_deref().unwrap_or(""),
+            result.id
+        )),
     )?;
     Ok(result)
 }
@@ -136,7 +140,11 @@ pub fn actualizar_cliente(
         user_id,
         AuditScreen::Clientes,
         AuditAction::Update,
-        Some(format!("Cliente: {} (id {})", result.nombre.as_deref().unwrap_or(""), result.id)),
+        Some(format!(
+            "Cliente: {} (id {})",
+            result.nombre.as_deref().unwrap_or(""),
+            result.id
+        )),
     )?;
     Ok(result)
 }

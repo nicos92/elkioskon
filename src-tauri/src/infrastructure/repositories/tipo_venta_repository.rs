@@ -29,18 +29,14 @@ impl TipoVentaRepository for SqliteTipoVentaRepository {
         )?;
 
         let id = conn.last_insert_rowid();
-        Ok(TipoVenta {
-            id,
-            ..tipo.clone()
-        })
+        Ok(TipoVenta { id, ..tipo.clone() })
     }
 
     fn find_by_id(&self, id: i64) -> Result<Option<TipoVenta>, AppError> {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let mut stmt = conn.prepare(
-            "SELECT id, nombre, hacia_donde, created_at FROM tipos_venta WHERE id = ?1",
-        )?;
+        let mut stmt = conn
+            .prepare("SELECT id, nombre, hacia_donde, created_at FROM tipos_venta WHERE id = ?1")?;
 
         let mut rows = stmt.query(params![id])?;
 
@@ -70,8 +66,8 @@ impl TipoVentaRepository for SqliteTipoVentaRepository {
     fn find_all(&self) -> Result<Vec<TipoVenta>, AppError> {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
-        let mut stmt =
-            conn.prepare("SELECT id, nombre, hacia_donde, created_at FROM tipos_venta ORDER BY id")?;
+        let mut stmt = conn
+            .prepare("SELECT id, nombre, hacia_donde, created_at FROM tipos_venta ORDER BY id")?;
 
         let mut tipos = Vec::new();
         let mut rows = stmt.query([])?;

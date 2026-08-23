@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::domain::entities::{CostUpdateOperation, StockPreview};
-use crate::domain::repositories::{CostUpdateApplyResult, CostUpdateRepository, CostUpdateUndoResult, StockRepository};
+use crate::domain::repositories::{
+    CostUpdateApplyResult, CostUpdateRepository, CostUpdateUndoResult, StockRepository,
+};
 use crate::infrastructure::error::AppError;
 
 pub struct CostUpdateService {
@@ -130,11 +132,9 @@ mod tests {
 
     fn get_admin_user_id() -> i64 {
         let conn = crate::infrastructure::database::DB.lock().unwrap();
-        conn.query_row(
-            "SELECT id FROM users WHERE username = 'admin'",
-            [],
-            |row| row.get(0),
-        )
+        conn.query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+            row.get(0)
+        })
         .unwrap()
     }
 
@@ -211,9 +211,7 @@ mod tests {
         let cats = cat_repo.find_all().unwrap();
         let cat = cats.iter().find(|c| c.categoria == "Cat SV2").unwrap();
 
-        let previews = service
-            .get_preview(20.0, Some(cat.id), None, None)
-            .unwrap();
+        let previews = service.get_preview(20.0, Some(cat.id), None, None).unwrap();
         assert_eq!(previews.len(), 1);
         assert!((previews[0].costo_actual - 1000.0).abs() < 0.01);
         assert!((previews[0].costo_nuevo - 1200.0).abs() < 0.01);

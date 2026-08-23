@@ -31,10 +31,7 @@ impl AuditLogService {
         action: AuditAction,
         detail: Option<String>,
     ) -> Result<AuditLog, AppError> {
-        let username = self
-            .repository
-            .get_username(user_id)?
-            .unwrap_or_default();
+        let username = self.repository.get_username(user_id)?.unwrap_or_default();
         let log = AuditLog::new(user_id, username, screen, action, detail);
         self.repository.create(&log)
     }

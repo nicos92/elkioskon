@@ -1,8 +1,8 @@
 pub mod articulo;
 pub mod audit_log;
 pub mod categoria;
-pub mod cliente;
 pub mod cierre;
+pub mod cliente;
 pub mod cost_update_item;
 pub mod cost_update_operation;
 pub mod dollar_quote;

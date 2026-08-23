@@ -188,9 +188,7 @@ impl From<rusqlite::Error> for AppError {
                     match extended_code {
                         787 => AppError::ForeignKeyConstraint,
                         2067 => AppError::DuplicateValue,
-                        _ => AppError::Database(
-                            msg.unwrap_or_else(|| ffi_error.to_string()),
-                        ),
+                        _ => AppError::Database(msg.unwrap_or_else(|| ffi_error.to_string())),
                     }
                 } else {
                     AppError::Database(msg.unwrap_or_else(|| ffi_error.to_string()))
@@ -274,20 +272,14 @@ impl AppError {
                 "No se puede eliminar porque otros registros hacen referencia a este elemento."
                     .to_string()
             }
-            AppError::DuplicateValue => {
-                "Ya existe un registro con ese valor único.".to_string()
-            }
+            AppError::DuplicateValue => "Ya existe un registro con ese valor único.".to_string(),
             AppError::UserNotFound => "El usuario no existe.".to_string(),
             AppError::PermissionNotFound => "El permiso no existe.".to_string(),
             AppError::UsernameExists => "El nombre de usuario ya existe.".to_string(),
             AppError::PermissionExists => "El permiso ya existe.".to_string(),
-            AppError::InvalidCredentials => {
-                "Usuario o contraseña incorrectos.".to_string()
-            }
+            AppError::InvalidCredentials => "Usuario o contraseña incorrectos.".to_string(),
             AppError::UserInactive => "El usuario está inactivo.".to_string(),
-            AppError::Hashing(_) => {
-                "Ocurrió un error al procesar la contraseña.".to_string()
-            }
+            AppError::Hashing(_) => "Ocurrió un error al procesar la contraseña.".to_string(),
             AppError::PermissionAlreadyAssigned => {
                 "El permiso ya está asignado a este usuario.".to_string()
             }
@@ -309,16 +301,13 @@ impl AppError {
                     .to_string()
             }
             AppError::ArticuloNotFound => "El artículo no existe.".to_string(),
-            AppError::CodArticuloExists => {
-                "El código de artículo ya está registrado.".to_string()
-            }
+            AppError::CodArticuloExists => "El código de artículo ya está registrado.".to_string(),
             AppError::StockNotFound => "El stock no existe.".to_string(),
             AppError::StockExistsForArticulo => {
                 "El artículo ya tiene stock registrado.".to_string()
             }
             AppError::ProveedorHasArticulos => {
-                "No se puede eliminar el proveedor porque tiene artículos asociados."
-                    .to_string()
+                "No se puede eliminar el proveedor porque tiene artículos asociados.".to_string()
             }
             AppError::ClienteNotFound => "El cliente no existe.".to_string(),
             AppError::ClienteSinDatosDeContacto => {
@@ -331,21 +320,16 @@ impl AppError {
             AppError::ClienteDefectoNotFound => {
                 "El cliente por defecto no existe. Reinicie la base de datos.".to_string()
             }
-            AppError::CannotDeleteSelf => {
-                "No se puede eliminar a sí mismo.".to_string()
-            }
+            AppError::CannotDeleteSelf => "No se puede eliminar a sí mismo.".to_string(),
             AppError::CannotDeleteAdmin => {
                 "No se puede eliminar el usuario administrador.".to_string()
             }
-            AppError::EmptyPassword => {
-                "La contraseña no puede estar vacía.".to_string()
-            }
+            AppError::EmptyPassword => "La contraseña no puede estar vacía.".to_string(),
             AppError::VentaNotFound => "La venta no existe.".to_string(),
             AppError::VentaAlreadyAnulada => "La venta ya fue anulada.".to_string(),
             AppError::PresupuestoNotFound => "El presupuesto no existe.".to_string(),
             AppError::PresupuestoEstadoInvalido => {
-                "El presupuesto no está en un estado que permita esa operación."
-                    .to_string()
+                "El presupuesto no está en un estado que permita esa operación.".to_string()
             }
             AppError::InsufficientStock => {
                 "Stock insuficiente para uno de los artículos.".to_string()
@@ -353,16 +337,11 @@ impl AppError {
             AppError::ArticuloWithoutStock => {
                 "Uno de los artículos no tiene stock registrado.".to_string()
             }
-            AppError::DescuentoInvalido => {
-                "El descuento debe estar entre 0 y 100.".to_string()
-            }
+            AppError::DescuentoInvalido => "El descuento debe estar entre 0 y 100.".to_string(),
             AppError::TipoVentaNotFound => "El tipo de venta no existe.".to_string(),
-            AppError::TipoVentaExists => {
-                "Ya existe un tipo de venta con ese nombre.".to_string()
-            }
+            AppError::TipoVentaExists => "Ya existe un tipo de venta con ese nombre.".to_string(),
             AppError::TipoVentaInUse => {
-                "No se puede eliminar el tipo de venta porque tiene ventas asociadas."
-                    .to_string()
+                "No se puede eliminar el tipo de venta porque tiene ventas asociadas.".to_string()
             }
             AppError::StockHasVentas => {
                 "No se puede eliminar el stock porque el artículo tiene ventas asociadas."
@@ -371,19 +350,13 @@ impl AppError {
             AppError::TipoVentaNombreInvalido => {
                 "El nombre del tipo de venta no puede estar vacío.".to_string()
             }
-            AppError::CierreYaExiste => {
-                "Ya existe un cierre para esa fecha.".to_string()
-            }
+            AppError::CierreYaExiste => "Ya existe un cierre para esa fecha.".to_string(),
             AppError::CierreNotFound => "El cierre no existe.".to_string(),
             AppError::CierreSinVentas => {
                 "El día seleccionado no tiene ventas para cerrar.".to_string()
             }
-            AppError::CierreFechaFutura => {
-                "No se puede cerrar una fecha futura.".to_string()
-            }
-            AppError::DiaCerrado => {
-                "Día cerrado, no se pueden ingresar más ventas.".to_string()
-            }
+            AppError::CierreFechaFutura => "No se puede cerrar una fecha futura.".to_string(),
+            AppError::DiaCerrado => "Día cerrado, no se pueden ingresar más ventas.".to_string(),
             AppError::DiaCerradoAnulacion => {
                 "El día está cerrado, no se puede anular la venta.".to_string()
             }
@@ -391,12 +364,8 @@ impl AppError {
                 "No se pudo obtener la cotización del dólar. Intente nuevamente más tarde."
                     .to_string()
             }
-            AppError::DollarQuoteNotFound => {
-                "La cotización del dólar no existe.".to_string()
-            }
-            AppError::Internal(_) => {
-                "Ocurrió un error inesperado. Intente nuevamente.".to_string()
-            }
+            AppError::DollarQuoteNotFound => "La cotización del dólar no existe.".to_string(),
+            AppError::Internal(_) => "Ocurrió un error inesperado. Intente nuevamente.".to_string(),
             AppError::BulkUpdateInvalidPorcentaje => {
                 "El porcentaje ingresado es inválido.".to_string()
             }
@@ -406,9 +375,7 @@ impl AppError {
             AppError::CostUpdateNotFound => {
                 "No se encontró la operación de actualización de costos.".to_string()
             }
-            AppError::CostUpdateAlreadyUndone => {
-                "La operación ya fue deshecha.".to_string()
-            }
+            AppError::CostUpdateAlreadyUndone => "La operación ya fue deshecha.".to_string(),
             AppError::CostUpdateModifiedAfter(count) => {
                 format!(
                     "No se puede deshacer: {} artículo(s) fueron modificados después de la operación.",
@@ -442,10 +409,7 @@ mod tests {
         assert_eq!(AppError::UserNotFound.code(), "user_not_found");
         assert_eq!(AppError::PermissionDenied.code(), "permission_denied");
         assert_eq!(AppError::InsufficientStock.code(), "insufficient_stock");
-        assert_eq!(
-            AppError::CierreFechaFutura.code(),
-            "cierre_fecha_futura"
-        );
+        assert_eq!(AppError::CierreFechaFutura.code(), "cierre_fecha_futura");
         assert_eq!(
             AppError::ClienteSinDatosDeContacto.code(),
             "cliente_sin_datos_de_contacto"
@@ -475,10 +439,7 @@ mod tests {
             AppError::BulkUpdateNoMatches.code(),
             "bulk_update_no_matches"
         );
-        assert_eq!(
-            AppError::CostUpdateNotFound.code(),
-            "cost_update_not_found"
-        );
+        assert_eq!(AppError::CostUpdateNotFound.code(), "cost_update_not_found");
         assert_eq!(
             AppError::CostUpdateAlreadyUndone.code(),
             "cost_update_already_undone"
@@ -491,7 +452,10 @@ mod tests {
 
     #[test]
     fn user_message_returns_spanish_messages() {
-        assert_eq!(AppError::UserNotFound.user_message(), "El usuario no existe.");
+        assert_eq!(
+            AppError::UserNotFound.user_message(),
+            "El usuario no existe."
+        );
         assert_eq!(
             AppError::DescuentoInvalido.user_message(),
             "El descuento debe estar entre 0 y 100."
@@ -526,7 +490,8 @@ mod tests {
     #[test]
     fn maps_unique_constraint_to_duplicate_value() {
         let conn = rusqlite::Connection::open_in_memory().unwrap();
-        conn.execute_batch("CREATE TABLE t (a TEXT UNIQUE)").unwrap();
+        conn.execute_batch("CREATE TABLE t (a TEXT UNIQUE)")
+            .unwrap();
         conn.execute("INSERT INTO t (a) VALUES ('x')", []).unwrap();
         let err = conn
             .execute("INSERT INTO t (a) VALUES ('x')", [])

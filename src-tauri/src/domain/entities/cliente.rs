@@ -34,8 +34,7 @@ impl Cliente {
     }
 
     pub fn is_default(&self) -> bool {
-        self.nombre.as_deref() == Some("Consumidor")
-            && self.apellido.as_deref() == Some("Final")
+        self.nombre.as_deref() == Some("Consumidor") && self.apellido.as_deref() == Some("Final")
     }
 }
 

@@ -106,8 +106,8 @@ impl UserService {
 
         if actor_id == target_user_id {
             let current = current_password.ok_or(AppError::InvalidCredentials)?;
-            let is_valid = verify(&current, &target.password)
-                .map_err(|e| AppError::Hashing(e.to_string()))?;
+            let is_valid =
+                verify(&current, &target.password).map_err(|e| AppError::Hashing(e.to_string()))?;
             if !is_valid {
                 return Err(AppError::InvalidCredentials);
             }

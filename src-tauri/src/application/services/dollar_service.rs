@@ -31,10 +31,7 @@ impl DollarService {
         )
     }
 
-    pub fn with_repository(
-        repository: Arc<dyn DollarQuoteRepository>,
-        base_url: &str,
-    ) -> Self {
+    pub fn with_repository(repository: Arc<dyn DollarQuoteRepository>, base_url: &str) -> Self {
         Self::with_repository_and_client(
             repository,
             Arc::new(DollarHttpClient::with_base(base_url)),
@@ -76,9 +73,7 @@ pub fn build_quote_from_rates(rates: &[DollarRate]) -> Result<DollarQuote, AppEr
         .iter()
         .find(|r| r.dollar_type == "oficial")
         .ok_or_else(|| {
-            AppError::DollarFetchError(
-                "La API no devolvió la cotización oficial.".to_string(),
-            )
+            AppError::DollarFetchError("La API no devolvió la cotización oficial.".to_string())
         })?;
     let blue = rates
         .iter()
@@ -154,9 +149,8 @@ struct ApiDollarRate {
 }
 
 pub fn parse_api_response(body: &str) -> Result<Vec<DollarRate>, AppError> {
-    let api_rates: Vec<ApiDollarRate> = serde_json::from_str(body).map_err(|e| {
-        AppError::DollarFetchError(format!("Respuesta inválida de la API: {e}"))
-    })?;
+    let api_rates: Vec<ApiDollarRate> = serde_json::from_str(body)
+        .map_err(|e| AppError::DollarFetchError(format!("Respuesta inválida de la API: {e}")))?;
 
     let mut rates: Vec<DollarRate> = api_rates
         .into_iter()

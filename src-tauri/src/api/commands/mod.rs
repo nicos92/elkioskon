@@ -35,8 +35,12 @@ pub use cierre_commands::{
     crear_cierre, get_all_cierres, is_dia_cerrado, reabrir_cierre, CierreAppState,
 };
 pub use cliente_commands::{
-    actualizar_cliente, crear_cliente, eliminar_cliente, get_all_clientes,
-    get_cliente_by_id, get_cliente_defecto, ClienteAppState,
+    actualizar_cliente, crear_cliente, eliminar_cliente, get_all_clientes, get_cliente_by_id,
+    get_cliente_defecto, ClienteAppState,
+};
+pub use cost_update_commands::{
+    apply_costo_percentage_stock, cleanup_cost_update_operations, get_last_undoable_cost_update,
+    get_stock_preview_costo, undo_cost_update, CostUpdateAppState,
 };
 pub use dollar_commands::{
     delete_dollar_quote, fetch_dollar_rates_manual, get_dollar_quotes, DollarAppState,
@@ -50,23 +54,16 @@ pub use proveedor_commands::{
     create_proveedor, delete_proveedor, get_all_proveedores, get_proveedor_by_id, update_proveedor,
     ProveedorAppState,
 };
-pub use cost_update_commands::{
-    apply_costo_percentage_stock, cleanup_cost_update_operations,
-    get_last_undoable_cost_update, get_stock_preview_costo,
-    undo_cost_update, CostUpdateAppState,
-};
 pub use stock_commands::{
-    create_stock, delete_stock, get_all_stock, get_precio_venta,
-    get_stock_by_articulo, get_stock_by_id, update_stock,
-    StockAppState,
+    create_stock, delete_stock, get_all_stock, get_precio_venta, get_stock_by_articulo,
+    get_stock_by_id, update_stock, StockAppState,
 };
 pub use sub_categoria_commands::{
     create_sub_categoria, delete_sub_categoria, get_all_sub_categorias,
     get_sub_categorias_by_categoria, update_sub_categoria, SubCategoriaAppState,
 };
 pub use tipo_venta_commands::{
-    create_tipo_venta, delete_tipo_venta, get_all_tipos_venta, update_tipo_venta,
-    TipoVentaAppState,
+    create_tipo_venta, delete_tipo_venta, get_all_tipos_venta, update_tipo_venta, TipoVentaAppState,
 };
 pub use venta_commands::{
     anular_venta, create_venta, get_all_ventas, get_venta_by_id, get_ventas_por_cliente,
@@ -373,7 +370,10 @@ pub fn create_permission(
         user_id,
         AuditScreen::Permisos,
         AuditAction::Create,
-        Some(format!("Permiso: {} (id {})", permission.permission, permission.id)),
+        Some(format!(
+            "Permiso: {} (id {})",
+            permission.permission, permission.id
+        )),
     )?;
     Ok(permission)
 }

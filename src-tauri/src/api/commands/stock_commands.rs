@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::application::services::{log_audit, StockService};
 use crate::api::commands::permissions::check_permission;
+use crate::application::services::{log_audit, StockService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, Stock};
 use crate::infrastructure::error::AppError;
 
@@ -99,7 +99,10 @@ pub fn create_stock(
         user_id,
         AuditScreen::Stock,
         AuditAction::Create,
-        Some(format!("Stock artículo {} (id {})", result.id_articulo, result.id)),
+        Some(format!(
+            "Stock artículo {} (id {})",
+            result.id_articulo, result.id
+        )),
     )?;
     Ok(result)
 }
@@ -125,7 +128,10 @@ pub fn update_stock(
         user_id,
         AuditScreen::Stock,
         AuditAction::Update,
-        Some(format!("Stock artículo {} (id {})", result.id_articulo, result.id)),
+        Some(format!(
+            "Stock artículo {} (id {})",
+            result.id_articulo, result.id
+        )),
     )?;
     Ok(result)
 }

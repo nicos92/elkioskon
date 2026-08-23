@@ -93,9 +93,7 @@ impl CierreRepository for SqliteCierreRepository {
         let limit = limit.max(1);
         let offset = offset.max(0);
 
-        let total: i64 = conn.query_row("SELECT COUNT(*) FROM cierres", [], |row| {
-            row.get(0)
-        })?;
+        let total: i64 = conn.query_row("SELECT COUNT(*) FROM cierres", [], |row| row.get(0))?;
 
         let mut stmt = conn.prepare(
             "SELECT id, fecha, dia, mes, anio, total_costo, total_ganancia, total_venta, created_at

@@ -195,10 +195,7 @@ mod tests {
         let repo = SqliteClienteRepository::new();
 
         let all = repo.find_all().unwrap();
-        let count = all
-            .iter()
-            .filter(|c| c.is_default())
-            .count();
+        let count = all.iter().filter(|c| c.is_default()).count();
         assert_eq!(count, 1);
     }
 
@@ -250,10 +247,15 @@ mod tests {
         .unwrap();
 
         let all = repo.find_all().unwrap();
-        let names: Vec<Option<String>> =
-            all.iter().map(|c| c.nombre.clone()).collect();
-        let ana = names.iter().position(|n| n.as_deref() == Some("Ana")).unwrap();
-        let zoe = names.iter().position(|n| n.as_deref() == Some("Zoe")).unwrap();
+        let names: Vec<Option<String>> = all.iter().map(|c| c.nombre.clone()).collect();
+        let ana = names
+            .iter()
+            .position(|n| n.as_deref() == Some("Ana"))
+            .unwrap();
+        let zoe = names
+            .iter()
+            .position(|n| n.as_deref() == Some("Zoe"))
+            .unwrap();
         assert!(ana < zoe);
     }
 }

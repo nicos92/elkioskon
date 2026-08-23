@@ -137,7 +137,9 @@ mod tests {
         let _guard = fresh_db();
         let repo = SqliteCategoriaRepository::new();
 
-        let created = repo.create(&Categoria::new("Test Cat".to_string())).unwrap();
+        let created = repo
+            .create(&Categoria::new("Test Cat".to_string()))
+            .unwrap();
         assert!(created.id > 0);
 
         let found = repo.find_by_id(created.id).unwrap().unwrap();
@@ -149,7 +151,8 @@ mod tests {
         let _guard = fresh_db();
         let repo = SqliteCategoriaRepository::new();
 
-        repo.create(&Categoria::new("Bebidas Test".to_string())).unwrap();
+        repo.create(&Categoria::new("Bebidas Test".to_string()))
+            .unwrap();
         let found = repo.find_by_name("Bebidas Test").unwrap().unwrap();
         assert_eq!(found.categoria, "Bebidas Test");
         assert!(repo.find_by_name("No existe").unwrap().is_none());

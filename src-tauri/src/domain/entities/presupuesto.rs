@@ -72,12 +72,7 @@ pub struct PresupuestoDetalle {
 }
 
 impl PresupuestoDetalle {
-    pub fn new(
-        id_articulo: i64,
-        cantidad: f64,
-        costo_unitario: f64,
-        precio_unitario: f64,
-    ) -> Self {
+    pub fn new(id_articulo: i64, cantidad: f64, costo_unitario: f64, precio_unitario: f64) -> Self {
         Self {
             id: 0,
             id_presupuesto: 0,

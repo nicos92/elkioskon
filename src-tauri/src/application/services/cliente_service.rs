@@ -146,8 +146,7 @@ mod tests {
         repo.expect_create().returning(|c| Ok(c.clone()));
         let service = ClienteService::with_repository(Arc::new(repo));
 
-        let cliente =
-            service.create(None, None, Some("555-0000".to_string()), None, None);
+        let cliente = service.create(None, None, Some("555-0000".to_string()), None, None);
         assert!(cliente.is_ok());
         assert_eq!(cliente.unwrap().telefono.as_deref(), Some("555-0000"));
     }
@@ -174,9 +173,7 @@ mod tests {
     #[test]
     fn create_rejects_all_empty_fields() {
         let service = ClienteService::new();
-        let err = service
-            .create(None, None, None, None, None)
-            .unwrap_err();
+        let err = service.create(None, None, None, None, None).unwrap_err();
         assert!(matches!(err, AppError::ClienteSinDatosDeContacto));
     }
 

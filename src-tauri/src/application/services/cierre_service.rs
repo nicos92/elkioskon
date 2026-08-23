@@ -35,7 +35,11 @@ impl CierreService {
         }
 
         let start = local_to_utc(&day.and_hms_opt(0, 0, 0).unwrap());
-        let end = local_to_utc(&(day + chrono::Duration::days(1)).and_hms_opt(0, 0, 0).unwrap());
+        let end = local_to_utc(
+            &(day + chrono::Duration::days(1))
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+        );
 
         let mut conn = crate::infrastructure::database::DB
             .lock()

@@ -2,7 +2,9 @@ use chrono::Utc;
 use rusqlite::params;
 
 use crate::domain::entities::{CostUpdateEstado, CostUpdateItem, CostUpdateOperation};
-use crate::domain::repositories::{CostUpdateApplyResult, CostUpdateRepository, CostUpdateUndoResult};
+use crate::domain::repositories::{
+    CostUpdateApplyResult, CostUpdateRepository, CostUpdateUndoResult,
+};
 use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
 
@@ -96,7 +98,11 @@ impl CostUpdateRepository for SqliteCostUpdateRepository {
             let affected = snapshots.len() as i64;
 
             let stock_ids: Vec<i64> = snapshots.iter().map(|(id, _)| *id).collect();
-            let placeholders: Vec<String> = stock_ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+            let placeholders: Vec<String> = stock_ids
+                .iter()
+                .enumerate()
+                .map(|(i, _)| format!("?{}", i + 1))
+                .collect();
             let sql = format!(
                 "UPDATE stock SET costo = ROUND(costo * (1.0 + ?{} / 100.0), 2),
                        updated_at = ?{}
@@ -112,7 +118,8 @@ impl CostUpdateRepository for SqliteCostUpdateRepository {
             params_vec.push(Box::new(porcentaje));
             params_vec.push(Box::new(now.clone()));
 
-            let param_refs: Vec<&dyn rusqlite::types::ToSql> = params_vec.iter().map(|p| p.as_ref()).collect();
+            let param_refs: Vec<&dyn rusqlite::types::ToSql> =
+                params_vec.iter().map(|p| p.as_ref()).collect();
             conn.execute(&sql, param_refs.as_slice())
                 .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -166,10 +173,7 @@ impl CostUpdateRepository for SqliteCostUpdateRepository {
         }
     }
 
-    fn find_items_by_operation(
-        &self,
-        operation_id: i64,
-    ) -> Result<Vec<CostUpdateItem>, AppError> {
+    fn find_items_by_operation(&self, operation_id: i64) -> Result<Vec<CostUpdateItem>, AppError> {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn
@@ -372,19 +376,14 @@ mod tests {
     fn get_cat_id(cat_name: &str) -> i64 {
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
-        cats.iter()
-            .find(|c| c.categoria == cat_name)
-            .unwrap()
-            .id
+        cats.iter().find(|c| c.categoria == cat_name).unwrap().id
     }
 
     fn get_admin_user_id() -> i64 {
         let conn = DB.lock().unwrap();
-        conn.query_row(
-            "SELECT id FROM users WHERE username = 'admin'",
-            [],
-            |row| row.get(0),
-        )
+        conn.query_row("SELECT id FROM users WHERE username = 'admin'", [], |row| {
+            row.get(0)
+        })
         .unwrap()
     }
 
@@ -429,8 +428,12 @@ mod tests {
         let art1 = create_articulo_with_names("Cat CU3", "Sub CU3", "CU3");
         let art2 = create_articulo_with_names("Cat Other", "Sub Other", "CU3o");
         let stock_repo = SqliteStockRepository::new();
-        let s1 = stock_repo.create(&Stock::new(art1.id, 10.0, 1000.0, 20.0)).unwrap();
-        let s2 = stock_repo.create(&Stock::new(art2.id, 5.0, 2000.0, 30.0)).unwrap();
+        let s1 = stock_repo
+            .create(&Stock::new(art1.id, 10.0, 1000.0, 20.0))
+            .unwrap();
+        let s2 = stock_repo
+            .create(&Stock::new(art2.id, 5.0, 2000.0, 30.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat CU3");
@@ -499,15 +502,23 @@ mod tests {
         let art1 = create_articulo_with_names("Cat LR1", "Sub LR1", "LR1");
         let art2 = create_articulo_with_names("Cat LR2", "Sub LR2", "LR2");
         let stock_repo = SqliteStockRepository::new();
-        stock_repo.create(&Stock::new(art1.id, 5.0, 100.0, 10.0)).unwrap();
-        stock_repo.create(&Stock::new(art2.id, 5.0, 200.0, 10.0)).unwrap();
+        stock_repo
+            .create(&Stock::new(art1.id, 5.0, 100.0, 10.0))
+            .unwrap();
+        stock_repo
+            .create(&Stock::new(art2.id, 5.0, 200.0, 10.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat1 = get_cat_id("Cat LR1");
         let cat2 = get_cat_id("Cat LR2");
 
-        let r1 = repo.apply_with_history(user_id, 10.0, Some(cat1), None, None).unwrap();
-        let r2 = repo.apply_with_history(user_id, 20.0, Some(cat2), None, None).unwrap();
+        let r1 = repo
+            .apply_with_history(user_id, 10.0, Some(cat1), None, None)
+            .unwrap();
+        let r2 = repo
+            .apply_with_history(user_id, 20.0, Some(cat2), None, None)
+            .unwrap();
 
         let last = repo.find_last_undoable().unwrap().unwrap();
         assert_eq!(last.id, r2.operation_id);
@@ -523,12 +534,16 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat NU", "Sub NU", "NU");
         let stock_repo = SqliteStockRepository::new();
-        stock_repo.create(&Stock::new(art.id, 5.0, 100.0, 10.0)).unwrap();
+        stock_repo
+            .create(&Stock::new(art.id, 5.0, 100.0, 10.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat NU");
 
-        let r = repo.apply_with_history(user_id, 10.0, Some(cat_id), None, None).unwrap();
+        let r = repo
+            .apply_with_history(user_id, 10.0, Some(cat_id), None, None)
+            .unwrap();
         repo.undo_operation(r.operation_id).unwrap();
 
         assert!(repo.find_last_undoable().unwrap().is_none());
@@ -565,7 +580,9 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat UN2", "Sub UN2", "UN2");
         let stock_repo = SqliteStockRepository::new();
-        stock_repo.create(&Stock::new(art.id, 5.0, 100.0, 10.0)).unwrap();
+        stock_repo
+            .create(&Stock::new(art.id, 5.0, 100.0, 10.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat UN2");
@@ -598,7 +615,9 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat UN3", "Sub UN3", "UN3");
         let stock_repo = SqliteStockRepository::new();
-        stock_repo.create(&Stock::new(art.id, 5.0, 100.0, 10.0)).unwrap();
+        stock_repo
+            .create(&Stock::new(art.id, 5.0, 100.0, 10.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat UN3");
@@ -657,11 +676,15 @@ mod tests {
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat RT");
 
-        let r1 = repo.apply_with_history(user_id, 20.0, Some(cat_id), None, None).unwrap();
+        let r1 = repo
+            .apply_with_history(user_id, 20.0, Some(cat_id), None, None)
+            .unwrap();
         let after_first = stock_repo.find_by_id(stock.id).unwrap().unwrap();
         assert!((after_first.costo - 1200.0).abs() < 0.01);
 
-        let r2 = repo.apply_with_history(user_id, 10.0, Some(cat_id), None, None).unwrap();
+        let r2 = repo
+            .apply_with_history(user_id, 10.0, Some(cat_id), None, None)
+            .unwrap();
         let after_second = stock_repo.find_by_id(stock.id).unwrap().unwrap();
         assert!((after_second.costo - 1320.0).abs() < 0.01);
 
@@ -681,7 +704,9 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat FL", "Sub FL", "FL");
         let stock_repo = SqliteStockRepository::new();
-        stock_repo.create(&Stock::new(art.id, 5.0, 100.0, 10.0)).unwrap();
+        stock_repo
+            .create(&Stock::new(art.id, 5.0, 100.0, 10.0))
+            .unwrap();
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
         let cat_id = get_cat_id("Cat FL");
