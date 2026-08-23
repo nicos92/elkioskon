@@ -146,9 +146,9 @@ function onBlur() {
     max-height: 220px;
     overflow-y: auto;
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 2px solid var(--color-primary);
     border-radius: 6px;
-    margin-top: 0.25rem;
+    margin-top: 0rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
