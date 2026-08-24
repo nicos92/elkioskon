@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { getVersion } from "@tauri-apps/api/app";
 
 import { useAuthStore } from "../stores";
 import { useThemeStore } from "../stores/themeStore";
@@ -12,7 +13,15 @@ const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const { success: toastSuccess } = useToasts();
 
-const appVersion = ref("0.1.0");
+const appVersion = ref("");
+
+onMounted(async () => {
+    try {
+        appVersion.value = await getVersion();
+    } catch {
+        appVersion.value = "0.3.0";
+    }
+});
 
 const showPasswordModal = ref(false);
 const currentPassword = ref("");
