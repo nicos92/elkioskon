@@ -35,7 +35,7 @@ pub use presupuesto::{
     Presupuesto, PresupuestoDetalle, PresupuestoDetalleConArticulo, PresupuestoEstado,
     PresupuestoWithDetalle,
 };
-pub use proveedor::Proveedor;
+pub use proveedor::{Proveedor, DEFAULT_PROVEEDOR_NOMBRE};
 pub use stock::Stock;
 pub use stock_preview::StockPreview;
 pub use sub_categoria::SubCategoria;

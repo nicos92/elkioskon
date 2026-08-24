@@ -12,6 +12,7 @@ import type {
     CreateProveedorRequest,
     UpdateProveedorRequest,
 } from "../../domain/entities";
+import { isDefaultProveedor, DEFAULT_PROVEEDOR } from "../../domain/entities";
 
 const proveedoresStore = useProveedoresStore();
 const { canCreateProveedor, canUpdateProveedor, canDeleteProveedor } =
@@ -77,6 +78,12 @@ async function handleCreate() {
 
 async function handleUpdate() {
     if (!selectedProveedor.value) return;
+    if (isDefaultProveedor(selectedProveedor.value)) {
+        useToasts().error(
+            `No se puede modificar el proveedor '${DEFAULT_PROVEEDOR}'.`,
+        );
+        return;
+    }
     const request: UpdateProveedorRequest = {
         id: selectedProveedor.value.id,
         proveedor: editProveedor.value,
@@ -93,6 +100,13 @@ async function handleUpdate() {
 }
 
 async function handleDelete(id: number) {
+    const proveedor = proveedoresStore.proveedores.find((p) => p.id === id);
+    if (proveedor && isDefaultProveedor(proveedor)) {
+        useToasts().error(
+            `No se puede eliminar el proveedor '${DEFAULT_PROVEEDOR}'.`,
+        );
+        return;
+    }
     const success = await proveedoresStore.deleteProveedor(id);
     if (!success) {
         useToasts().error(
@@ -128,14 +142,25 @@ async function handleDelete(id: number) {
                 v-for="proveedor in proveedoresStore.proveedores"
                 :key="proveedor.id"
             >
-                <td>{{ proveedor.proveedor }}</td>
+                <td>
+                    {{ proveedor.proveedor }}
+                    <span
+                        v-if="isDefaultProveedor(proveedor)"
+                        class="default-badge"
+                    >
+                        por defecto
+                    </span>
+                </td>
                 <td>{{ proveedor.nombre }}</td>
                 <td>{{ proveedor.cuit || "-" }}</td>
                 <td>{{ proveedor.tel || "-" }}</td>
                 <td>{{ proveedor.email || "-" }}</td>
                 <td class="actions">
                     <button
-                        v-if="canUpdateProveedor()"
+                        v-if="
+                            canUpdateProveedor() &&
+                            !isDefaultProveedor(proveedor)
+                        "
                         @click="openEditModal(proveedor)"
                         class="btn-icon"
                         title="Editar"
@@ -143,7 +168,10 @@ async function handleDelete(id: number) {
                         <img src="/svg/edit.svg" alt="Editar" />
                     </button>
                     <ConfirmButton
-                        v-if="canDeleteProveedor()"
+                        v-if="
+                            canDeleteProveedor() &&
+                            !isDefaultProveedor(proveedor)
+                        "
                         message="¿Está seguro de eliminar este proveedor?"
                         @confirmed="handleDelete(proveedor.id)"
                     />
@@ -224,5 +252,15 @@ async function handleDelete(id: number) {
     padding: 2rem;
     background: var(--color-bg);
     min-height: 100%;
+}
+
+.default-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 999px;
+    background: rgba(102, 126, 234, 0.15);
+    color: #9A7EDD;
 }
 </style>

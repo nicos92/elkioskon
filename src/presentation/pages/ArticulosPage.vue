@@ -21,6 +21,7 @@ import type {
     CreateArticuloRequest,
     UpdateArticuloRequest,
 } from "../../domain/entities";
+import { isDefaultProveedor } from "../../domain/entities";
 
 const articulosStore = useArticulosStore();
 const subCategoriasStore = useSubCategoriasStore();
@@ -129,7 +130,10 @@ function openCreateModal() {
     newArticulo.value = "";
     newCodArticulo.value = "";
     newIdSubCategoria.value = null;
-    newIdProveedor.value = null;
+    const proveedorDefecto = proveedoresStore.proveedores.find(
+        isDefaultProveedor,
+    );
+    newIdProveedor.value = proveedorDefecto?.id ?? null;
     showCreateModal.value = true;
 }
 

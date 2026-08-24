@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub const DEFAULT_PROVEEDOR_NOMBRE: &str = "Sin Proveedor";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Proveedor {
     pub id: i64,
@@ -29,6 +31,10 @@ impl Proveedor {
             email,
             observacion,
         }
+    }
+
+    pub fn is_default(&self) -> bool {
+        self.proveedor == DEFAULT_PROVEEDOR_NOMBRE
     }
 }
 
@@ -86,5 +92,41 @@ mod tests {
         assert_eq!(back.proveedor, p.proveedor);
         assert_eq!(back.cuit, p.cuit);
         assert_eq!(back.id, 0);
+    }
+
+    #[test]
+    fn is_default_matches_sin_proveedor() {
+        let p = Proveedor::new(
+            DEFAULT_PROVEEDOR_NOMBRE.to_string(),
+            DEFAULT_PROVEEDOR_NOMBRE.to_string(),
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(p.is_default());
+    }
+
+    #[test]
+    fn is_default_false_for_other_proveedores() {
+        let exact_case = Proveedor::new(
+            "sin proveedor".to_string(),
+            "sin proveedor".to_string(),
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(!exact_case.is_default());
+
+        let real = Proveedor::new(
+            "ElectroSur".to_string(),
+            "ElectroSur SA".to_string(),
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(!real.is_default());
     }
 }

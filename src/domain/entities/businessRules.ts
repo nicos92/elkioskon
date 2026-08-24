@@ -1,4 +1,4 @@
-import type { Cliente } from "./types";
+import type { Cliente, Proveedor } from "./types";
 
 export const DEFAULT_CLIENT_NOMBRE = "Consumidor";
 export const DEFAULT_CLIENT_APELLIDO = "Final";
@@ -9,6 +9,12 @@ export function isDefaultClient(cliente: Cliente): boolean {
     cliente.nombre === DEFAULT_CLIENT_NOMBRE &&
     cliente.apellido === DEFAULT_CLIENT_APELLIDO
   );
+}
+
+export const DEFAULT_PROVEEDOR = "Sin Proveedor";
+
+export function isDefaultProveedor(proveedor: Proveedor): boolean {
+  return proveedor.proveedor === DEFAULT_PROVEEDOR;
 }
 
 export function calcularPrecioVenta(costo: number, ganancia: number): number {

@@ -78,6 +78,12 @@ pub enum AppError {
     #[error("Proveedor has articulos")]
     ProveedorHasArticulos,
 
+    #[error("Cannot modify the default proveedor")]
+    NoSePuedeModificarProveedorDefecto,
+
+    #[error("Cannot delete the default proveedor")]
+    NoSePuedeEliminarProveedorDefecto,
+
     #[error("Cliente not found")]
     ClienteNotFound,
 
@@ -227,6 +233,8 @@ impl AppError {
             AppError::StockNotFound => "stock_not_found",
             AppError::StockExistsForArticulo => "stock_exists_for_articulo",
             AppError::ProveedorHasArticulos => "proveedor_has_articulos",
+            AppError::NoSePuedeModificarProveedorDefecto => "no_se_puede_modificar_proveedor_defecto",
+            AppError::NoSePuedeEliminarProveedorDefecto => "no_se_puede_eliminar_proveedor_defecto",
             AppError::ClienteNotFound => "cliente_not_found",
             AppError::ClienteSinDatosDeContacto => "cliente_sin_datos_de_contacto",
             AppError::NoSePuedeEliminarClienteDefecto => "no_se_puede_eliminar_cliente_defecto",
@@ -308,6 +316,18 @@ impl AppError {
             }
             AppError::ProveedorHasArticulos => {
                 "No se puede eliminar el proveedor porque tiene artículos asociados.".to_string()
+            }
+            AppError::NoSePuedeModificarProveedorDefecto => {
+                format!(
+                    "No se puede modificar el proveedor '{}'.",
+                    crate::domain::entities::DEFAULT_PROVEEDOR_NOMBRE
+                )
+            }
+            AppError::NoSePuedeEliminarProveedorDefecto => {
+                format!(
+                    "No se puede eliminar el proveedor '{}'.",
+                    crate::domain::entities::DEFAULT_PROVEEDOR_NOMBRE
+                )
             }
             AppError::ClienteNotFound => "El cliente no existe.".to_string(),
             AppError::ClienteSinDatosDeContacto => {
@@ -419,6 +439,14 @@ mod tests {
             "no_se_puede_eliminar_cliente_defecto"
         );
         assert_eq!(
+            AppError::NoSePuedeModificarProveedorDefecto.code(),
+            "no_se_puede_modificar_proveedor_defecto"
+        );
+        assert_eq!(
+            AppError::NoSePuedeEliminarProveedorDefecto.code(),
+            "no_se_puede_eliminar_proveedor_defecto"
+        );
+        assert_eq!(
             AppError::DollarFetchError("x".to_string()).code(),
             "dollar_fetch_error"
         );
@@ -485,6 +513,12 @@ mod tests {
         assert!(AppError::CostUpdateModifiedAfter(3)
             .user_message()
             .contains("3 artículo(s) fueron modificados"));
+        assert!(AppError::NoSePuedeModificarProveedorDefecto
+            .user_message()
+            .contains("modificar el proveedor 'Sin Proveedor'"));
+        assert!(AppError::NoSePuedeEliminarProveedorDefecto
+            .user_message()
+            .contains("eliminar el proveedor 'Sin Proveedor'"));
     }
 
     #[test]

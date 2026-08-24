@@ -32,6 +32,7 @@ fn initialize(conn: &Connection) -> Result<(), rusqlite::Error> {
     seeds::seed_permissions(conn)?;
     seeds::seed_admin_user(conn)?;
     seeds::seed_cliente_defecto(conn)?;
+    seeds::seed_proveedor_defecto(conn)?;
     migrations::backfill_ventas_cliente(conn)?;
 
     seeds::seed_demo_data(conn)?;
