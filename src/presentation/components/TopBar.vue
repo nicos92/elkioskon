@@ -88,6 +88,10 @@ async function handleLogout() {
     background: var(--topbar-bg, #ffffff);
     border-bottom: 1px solid var(--topbar-border, #e2e8f0);
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: 100%;
 }
 
 [data-theme="dark"] .top-bar {

@@ -165,21 +165,8 @@ function isActive(name: string): boolean {
 <style scoped>
 .main-layout {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
     background: #f8fafc;
-}
-
-.sidebar {
-    width: 250px;
-    background: #1e293b;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease;
-}
-
-.sidebar.collapsed {
-    width: 60px;
 }
 
 .sidebar-header {
@@ -189,6 +176,10 @@ function isActive(name: string): boolean {
     height: 56px;
     padding: 0 1rem;
     border-bottom: 1px solid #334155;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1e293b;
 }
 
 .sidebar-header h2 {
@@ -206,9 +197,24 @@ function isActive(name: string): boolean {
     padding: 0.25rem;
 }
 
+.sidebar {
+    width: 250px;
+    background: #1e293b;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0;
+    overflow-y: auto;
 }
 
 .nav-item {

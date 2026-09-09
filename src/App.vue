@@ -169,6 +169,9 @@ html,
 body,
 #app {
   height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg);
+
 }
 
 body {
