@@ -166,7 +166,7 @@ function isActive(name: string): boolean {
 .main-layout {
     display: flex;
     height: 100vh;
-    background: #f8fafc;
+    background: var(--color-bg);
 }
 
 .sidebar-header {
