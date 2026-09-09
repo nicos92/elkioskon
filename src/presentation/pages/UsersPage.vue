@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useUsersStore, usePermissionsStore } from "../stores";
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useUsersStore } from "../stores";
 import { usePermissions } from "../composables/usePermissions";
 import { useToasts } from "../composables/useToasts";
 import { useConfirm } from "../composables/useConfirm";
 import type { User } from "../../domain/entities";
 
+const router = useRouter();
 const usersStore = useUsersStore();
-const permissionsStore = usePermissionsStore();
 const { error: toastError, success: toastSuccess } = useToasts();
 const {
     canCreateUser,
@@ -21,7 +22,6 @@ const { confirm } = useConfirm();
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
-const showPermissionsModal = ref(false);
 const showPasswordModal = ref(false);
 const selectedUser = ref<User | null>(null);
 
@@ -36,22 +36,8 @@ const passwordConfirm = ref("");
 const passwordError = ref<string | null>(null);
 const isSavingPassword = ref(false);
 
-const selectedUserAssignedPermissions = computed(() => {
-    return permissionsStore.getUserPermissions(selectedUser.value?.id || 0);
-});
-
-const selectedUserAvailablePermissions = computed(() => {
-    const assignedIds = new Set(
-        selectedUserAssignedPermissions.value.map((p) => p.id),
-    );
-    return permissionsStore.allPermissions.filter(
-        (p) => !assignedIds.has(p.id),
-    );
-});
-
 onMounted(async () => {
     await usersStore.fetchUsers();
-    await permissionsStore.fetchAllPermissions();
 });
 
 async function handleCreate() {
@@ -129,38 +115,8 @@ async function handleDelete(id: number) {
     }
 }
 
-async function openPermissionsModal(user: User) {
-    selectedUser.value = user;
-    await permissionsStore.fetchUserPermissions(user.id);
-    showPermissionsModal.value = true;
-}
-
-async function addPermission(permissionId: number) {
-    if (!selectedUser.value) return;
-    const success = await permissionsStore.addPermission(
-        selectedUser.value.id,
-        permissionId,
-    );
-    if (success) {
-        toastSuccess("Permiso asignado correctamente.");
-    } else {
-        toastError(
-            permissionsStore.error || "No se pudo asignar el permiso.",
-        );
-    }
-}
-
-async function removePermission(permissionId: number) {
-    if (!selectedUser.value) return;
-    const success = await permissionsStore.removePermission(
-        selectedUser.value.id,
-        permissionId,
-    );
-    if (success) {
-        toastSuccess("Permiso removido correctamente.");
-    } else {
-        toastError(permissionsStore.error || "No se pudo quitar el permiso.");
-    }
+function openPermissionsModal(user: User) {
+    router.push({ name: "user-permissions", params: { id: user.id } });
 }
 </script>
 
@@ -332,89 +288,6 @@ async function removePermission(permissionId: number) {
         </div>
 
         <div
-            v-if="showPermissionsModal"
-            class="modal-overlay"
-            @click.self="showPermissionsModal = false"
-        >
-            <div class="modal modal-large">
-                <h2>Permisos de {{ selectedUser?.username }}</h2>
-                <div class="permissions-grid">
-                    <div class="permission-section">
-                        <h3>Permisos Asignados</h3>
-                        <ul class="permission-list">
-                            <li
-                                v-for="perm in selectedUserAssignedPermissions"
-                                :key="perm.id"
-                            >
-                                <div class="perm-info">
-                                    <span class="perm-name">{{
-                                        perm.permission
-                                    }}</span>
-                                    <span class="perm-date"
-                                        >Asignado:
-                                        {{
-                                            new Date(
-                                                perm.assigned_at,
-                                            ).toLocaleString()
-                                        }}</span
-                                    >
-                                </div>
-                                <button
-                                    @click="removePermission(perm.id)"
-                                    class="btn-remove"
-                                >
-                                    ×
-                                </button>
-                            </li>
-                            <li
-                                v-if="
-                                    selectedUserAssignedPermissions.length === 0
-                                "
-                                class="empty"
-                            >
-                                Sin permisos asignados
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="permission-section">
-                        <h3>Permisos Disponibles</h3>
-                        <ul class="permission-list">
-                            <li
-                                v-for="perm in selectedUserAvailablePermissions"
-                                :key="perm.id"
-                            >
-                                {{ perm.permission }}
-                                <button
-                                    @click="addPermission(perm.id)"
-                                    class="btn-add"
-                                >
-                                    +
-                                </button>
-                            </li>
-                            <li
-                                v-if="
-                                    selectedUserAvailablePermissions.length ===
-                                    0
-                                "
-                                class="empty"
-                            >
-                                Todos los permisos asignados
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button
-                        @click="showPermissionsModal = false"
-                        class="btn-secondary"
-                    >
-                        Cerrar
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div
             v-if="showPasswordModal"
             class="modal-overlay"
             @click.self="showPasswordModal = false"
@@ -561,10 +434,6 @@ async function removePermission(permissionId: number) {
     max-width: 400px;
 }
 
-.modal-large {
-    max-width: 600px;
-}
-
 .modal h2 {
     margin: 0 0 1.5rem;
 }
@@ -616,74 +485,4 @@ async function removePermission(permissionId: number) {
     color: var(--color-text-muted);
 }
 
-.permissions-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.permission-section h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1rem;
-}
-
-.permission-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.permission-list li {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.permission-list li.empty {
-    color: #999;
-    font-style: italic;
-}
-
-.permission-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.perm-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.perm-name {
-    font-weight: 500;
-}
-
-.perm-date {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-}
-
-.btn-add {
-    background: #48bb78;
-    color: white;
-    border: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.btn-remove {
-    background: var(--color-danger);
-    color: white;
-    border: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    cursor: pointer;
-}
 </style>
