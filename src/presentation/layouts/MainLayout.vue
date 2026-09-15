@@ -179,7 +179,7 @@ function isActive(name: string): boolean {
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--color-surface);
+    background: var(--color-sidebar);
 }
 
 .sidebar-header h2 {
@@ -200,7 +200,7 @@ function isActive(name: string): boolean {
 
 .sidebar {
     width: 250px;
-    background: var(--color-surface);
+    background: var(--color-sidebar);
     color: var(--color-text);
     display: flex;
     flex-direction: column;
