@@ -420,7 +420,7 @@ function generarPdf() {
                 <button
                     type="button"
                     @click="handleCreate"
-                    class="btn-primary"
+                    class="btn-success"
                     :disabled="!carritoValido || ventasStore.diaCerrado"
                 >
                     Registrar Venta
@@ -542,9 +542,9 @@ function generarPdf() {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    color: #2D195D;
-    background: rgba(45, 25, 93, 0.08);
-    border: 1px solid rgba(45, 25, 93, 0.3);
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
     padding: 0.75rem 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;
@@ -620,24 +620,6 @@ function generarPdf() {
     padding-right: 2.5rem;
 }
 
-.btn-primary {
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background: var(--color-primary);
-}
-
-.btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 .btn-secondary {
     background: var(--color-surface-2);
     color: var(--color-text);
@@ -668,8 +650,8 @@ function generarPdf() {
 }
 
 .btn-presupuesto {
-    background: #2D195D;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
@@ -677,7 +659,7 @@ function generarPdf() {
 }
 
 .btn-presupuesto:hover:not(:disabled) {
-    background: var(--color-primary);
+    background: var(--color-secondary);
 }
 
 .btn-presupuesto:disabled {

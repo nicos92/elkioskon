@@ -236,7 +236,7 @@ select.filter-input {
 
 .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     padding: 0.6rem 1.25rem;
     border-radius: 6px;
@@ -277,23 +277,23 @@ select.filter-input {
 }
 
 .badge-nuevo {
-    background: rgba(72, 187, 120, 0.15);
-    color: #276749;
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
 }
 
 .badge-modificar {
-    background: rgba(236, 201, 75, 0.2);
-    color: #975a16;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
 }
 
 .badge-consultar {
-    background: rgba(66, 153, 225, 0.15);
-    color: #2b6cb0;
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
 }
 
 .badge-eliminar {
     background: rgba(var(--color-danger-rgb), 0.15);
-    color: #c53030;
+    color: var(--color-danger);
 }
 
 .error-banner {

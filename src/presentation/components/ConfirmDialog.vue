@@ -98,8 +98,8 @@ onBeforeUnmount(() => {
 }
 
 .btn-primary {
-  background: #512DA8;
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
@@ -112,10 +112,11 @@ onBeforeUnmount(() => {
 
 .btn-primary.btn-danger {
   background: var(--color-danger);
+  color: #fff;
 }
 
 .btn-primary.btn-danger:hover {
-  background: #c53030;
+  background: var(--color-danger-dark);
 }
 
 .btn-secondary {

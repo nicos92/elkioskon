@@ -85,8 +85,8 @@ async function handleLogout() {
     justify-content: space-between;
     height: 56px;
     padding: 0 1.5rem;
-    background: var(--topbar-bg, #ffffff);
-    border-bottom: 1px solid var(--topbar-border, #e2e8f0);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
     position: sticky;
     top: 0;
@@ -94,23 +94,14 @@ async function handleLogout() {
     width: 100%;
 }
 
-[data-theme="dark"] .top-bar {
-    background: var(--topbar-bg, #1e293b);
-    border-bottom-color: var(--topbar-border, #334155);
-}
-
 .page-title {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--topbar-title, #0f172a);
+    color: var(--color-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-[data-theme="dark"] .page-title {
-    color: var(--topbar-title, #f1f5f9);
 }
 
 .user-section {
@@ -127,8 +118,8 @@ async function handleLogout() {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: #667e99;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     font-size: 0.8rem;
     font-weight: 600;
     flex-shrink: 0;
@@ -136,15 +127,11 @@ async function handleLogout() {
 
 .username {
     font-size: 0.9rem;
-    color: var(--topbar-user, #334155);
+    color: var(--color-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 220px;
-}
-
-[data-theme="dark"] .username {
-    color: var(--topbar-user, #cbd5e1);
 }
 
 .logout-btn {

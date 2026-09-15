@@ -443,24 +443,24 @@ async function handleUndo() {
 }
 
 .text-success {
-    color: #22c55e;
+    color: var(--color-success);
 }
 
 .text-danger {
-    color: #ef4444;
+    color: var(--color-danger);
 }
 
 .applied-message {
-    color: #22c55e;
+    color: var(--color-success);
     font-weight: 500;
 }
 
 .btn-undo {
     padding: 0.5rem 1rem;
-    border: 1px solid #f59e0b;
+    border: 1px solid var(--color-warning);
     border-radius: 6px;
     background: transparent;
-    color: #f59e0b;
+    color: var(--color-warning);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -468,8 +468,8 @@ async function handleUndo() {
 }
 
 .btn-undo:hover:not(:disabled) {
-    background: #f59e0b;
-    color: #fff;
+    background: var(--color-warning);
+    color: var(--color-on-primary);
 }
 
 .btn-undo:disabled {

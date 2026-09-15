@@ -139,12 +139,12 @@ function toNumber(value: string): number {
 }
 
 .stock-warning-row td {
-    background: rgba(var(--color-danger-rgb), 0.06);
+    background: rgba(var(--color-warning-rgb), 0.08);
 }
 
 .stock-warning {
     display: block;
-    color: var(--color-danger);
+    color: var(--color-warning);
     font-size: 0.8rem;
 }
 </style>

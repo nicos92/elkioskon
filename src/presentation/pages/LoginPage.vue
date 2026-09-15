@@ -181,7 +181,7 @@ button {
     width: 100%;
     padding: 0.75rem;
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     border-radius: 6px;
     font-size: 1rem;
@@ -203,16 +203,16 @@ button:disabled {
     color: var(--color-danger);
     margin-bottom: 1rem;
     padding: 0.75rem;
-    background: #fed7d7;
+    background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
     border-radius: 6px;
     text-align: center;
 }
 
 .success-message {
-    color: #2f855a;
+    color: var(--color-success);
     margin-bottom: 1rem;
     padding: 0.75rem;
-    background: #c6f6d5;
+    background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
     border-radius: 6px;
     text-align: center;
 }

@@ -441,19 +441,19 @@ async function handleAnular(presupuesto: PresupuestoWithDetalle) {
 }
 
 .status-pendiente {
-    color: #d69e2e;
+    color: var(--color-warning);
 }
 
 .status-aprobado {
-    color: #3182ce;
+    color: var(--color-success);
 }
 
 .status-vencido {
-    color: #805ad5;
+    color: var(--color-danger);
 }
 
 .status-convertido {
-    color: #38a169;
+    color: var(--color-primary);
 }
 
 .status-anulado {

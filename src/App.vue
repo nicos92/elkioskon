@@ -48,7 +48,7 @@ button:not(.btn-icon).btn-danger {
 
 .btn-primary {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
@@ -60,6 +60,24 @@ button:not(.btn-icon).btn-danger {
 }
 
 .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: var(--color-on-success);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-success:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn-success:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -185,33 +203,50 @@ body {
 }
 
 html {
-  --color-primary: #3f2281;
+  --color-primary: #ff6b6b;
+  --color-on-primary: #1a1a1e;
+  --color-success: #4e9f3d;
+  --color-success-dark: #3e7d2f;
+  --color-success-rgb: 78, 159, 61;
+  --color-on-success: #121214;
+  --color-warning: #f2994a;
+  --color-warning-rgb: 242, 153, 74;
 }
 
 html[data-theme="light"] {
   color-scheme: light;
-  --color-bg: #f3f4f6;
+  --color-bg: #f8f7f4;
   --color-surface: #ffffff;
-  --color-surface-2: #f8fafc;
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-secondary: #5a3aa6;
-  --color-danger: #e53e3e;
-  --color-danger-rgb: 229, 62, 62;
+  --color-surface-2: #f1efeb;
+  --color-text: #2a2a2e;
+  --color-text-muted: #6b6b76;
+  --color-border: #e4e2dc;
+  --color-secondary: #d95656;
+  --color-success: #3e7d2f;
+  --color-success-rgb: 62, 125, 47;
+  --color-warning: #c97e2a;
+  --color-warning-rgb: 201, 126, 42;
+  --color-danger: #d64545;
+  --color-danger-dark: #c53030;
+  --color-danger-rgb: 214, 69, 69;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #020617;
-  --color-surface: #0f172a;
-  --color-surface-2: #111c33;
-  --color-text: #e5e7eb;
-  --color-text-muted: #94a3b8;
-  --color-border: #1f2937;
-  --color-secondary: #5a3aa6;
-  --color-danger: #e53e3e;
-  --color-danger-rgb: 229, 62, 62;
+  --color-bg: #121214;
+  --color-surface: #1a1a1e;
+  --color-surface-2: #232328;
+  --color-text: #f8f9fa;
+  --color-text-muted: #8c8c9e;
+  --color-border: #33333b;
+  --color-secondary: #cc5555;
+  --color-success: #4e9f3d;
+  --color-success-rgb: 78, 159, 61;
+  --color-warning: #f2994a;
+  --color-warning-rgb: 242, 153, 74;
+  --color-danger: #e5484d;
+  --color-danger-dark: #7f1d1d;
+  --color-danger-rgb: 229, 72, 77;
 }
 
 .print-area {

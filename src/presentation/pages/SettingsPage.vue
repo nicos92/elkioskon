@@ -246,7 +246,7 @@ h1 {
 }
 
 .btn-danger:hover {
-    background: #c53030;
+    background: var(--color-danger-dark);
 }
 
 .btn-secondary {
@@ -260,7 +260,7 @@ h1 {
 
 .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;

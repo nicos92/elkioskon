@@ -65,7 +65,7 @@ const articulosBajoStock = computed(() => {
         <template v-else>
             <div class="stats-cards">
                 <div class="stat-card">
-                    <div class="stat-icon blue">
+                    <div class="stat-icon primary">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -94,7 +94,7 @@ const articulosBajoStock = computed(() => {
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon green">
+                    <div class="stat-icon success">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -126,7 +126,7 @@ const articulosBajoStock = computed(() => {
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon teal">
+                    <div class="stat-icon warning">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -153,7 +153,7 @@ const articulosBajoStock = computed(() => {
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon red">
+                    <div class="stat-icon danger">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -181,7 +181,7 @@ const articulosBajoStock = computed(() => {
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon purple">
+                    <div class="stat-icon primary">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -207,7 +207,7 @@ const articulosBajoStock = computed(() => {
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-icon orange">
+                    <div class="stat-icon warning">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -388,34 +388,24 @@ p {
     justify-content: center;
 }
 
-.stat-icon.blue {
-    background: #e0e7ff;
-    color: #4f46e5;
+.stat-icon.primary {
+    background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface));
+    color: var(--color-primary);
 }
 
-.stat-icon.green {
-    background: #d1fae5;
-    color: #059669;
+.stat-icon.success {
+    background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
+    color: var(--color-success);
 }
 
-.stat-icon.purple {
-    background: #ede9fe;
-    color: #7c3aed;
+.stat-icon.warning {
+    background: color-mix(in srgb, var(--color-warning) 15%, var(--color-surface));
+    color: var(--color-warning);
 }
 
-.stat-icon.orange {
-    background: #ffedd5;
-    color: #ea580c;
-}
-
-.stat-icon.teal {
-    background: #ccfbf1;
-    color: #0d9488;
-}
-
-.stat-icon.red {
-    background: #fee2e2;
-    color: #dc2626;
+.stat-icon.danger {
+    background: color-mix(in srgb, var(--color-danger) 15%, var(--color-surface));
+    color: var(--color-danger);
 }
 
 .stat-info {
@@ -454,7 +444,7 @@ p {
 
 .card h3 {
     margin: 0 0 0.5rem;
-    color: #9A7EDD;
+    color: var(--color-primary);
 }
 
 .card p {
@@ -500,14 +490,14 @@ p {
 
 .subcategory-tag {
     background: var(--color-surface-2);
-    color: #9A7EDD;
+    color: var(--color-primary);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;
 }
 
 .no-subcategories {
-    color: #999;
+    color: var(--color-text-muted);
     font-size: 0.8rem;
     font-style: italic;
 }
@@ -542,11 +532,11 @@ p {
 
 .quantity-cell {
     font-weight: 600;
-    color: #f59e0b;
+    color: var(--color-warning);
 }
 
 .quantity-cell.critical {
-    color: #ef4444;
+    color: var(--color-danger);
 }
 
 .config-card {
@@ -556,8 +546,8 @@ p {
 .card-link {
     display: inline-block;
     padding: 0.5rem 1rem;
-    background: #9A7EDD;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     text-decoration: none;
     border-radius: 6px;
     font-size: 0.9rem;
@@ -570,7 +560,7 @@ p {
 .empty-state {
     text-align: center;
     padding: 1.5rem;
-    color: #999;
+    color: var(--color-text-muted);
     font-style: italic;
 }
 </style>

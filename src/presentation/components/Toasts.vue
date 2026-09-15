@@ -42,7 +42,8 @@ const { toasts } = useToasts();
 }
 
 .toast.success {
-  background: #48bb78;
+  background: var(--color-success);
+  color: var(--color-on-success);
 }
 
 .toast-enter-active,

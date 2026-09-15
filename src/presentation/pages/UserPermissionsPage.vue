@@ -271,8 +271,8 @@ function goBack() {
 }
 
 .btn-add {
-    background: #48bb78;
-    color: white;
+    background: var(--color-success);
+    color: var(--color-on-success);
     border: none;
     width: 28px;
     height: 28px;
@@ -286,7 +286,7 @@ function goBack() {
 }
 
 .btn-add:hover {
-    background: #38a169;
+    background: var(--color-success-dark);
 }
 
 .btn-remove {

@@ -175,23 +175,24 @@ function isActive(name: string): boolean {
     justify-content: space-between;
     height: 56px;
     padding: 0 1rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--color-border);
     position: sticky;
     top: 0;
     z-index: 10;
-    background: #1e293b;
+    background: var(--color-surface);
 }
 
 .sidebar-header h2 {
     margin: 0;
     font-size: 1.2rem;
     white-space: nowrap;
+    color: var(--color-text);
 }
 
 .toggle-btn {
     background: none;
     border: none;
-    color: white;
+    color: var(--color-text-muted);
     cursor: pointer;
     font-size: 1rem;
     padding: 0.25rem;
@@ -199,8 +200,8 @@ function isActive(name: string): boolean {
 
 .sidebar {
     width: 250px;
-    background: #1e293b;
-    color: white;
+    background: var(--color-surface);
+    color: var(--color-text);
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease;
@@ -221,19 +222,19 @@ function isActive(name: string): boolean {
     display: flex;
     align-items: center;
     padding: 0.75rem 1rem;
-    color: #94a3b8;
+    color: var(--color-text-muted);
     text-decoration: none;
     transition: all 0.2s;
 }
 
 .nav-item:hover {
-    background: #334155;
-    color: white;
+    background: var(--color-surface-2);
+    color: var(--color-text);
 }
 
 .nav-item.active {
-    background: #667e99;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
 }
 
 .nav-icon {
@@ -248,12 +249,12 @@ function isActive(name: string): boolean {
 
 .sidebar-footer {
     padding: 1rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--color-border);
 }
 
 .footer-hint {
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--color-text-muted);
 }
 
 .main-content {

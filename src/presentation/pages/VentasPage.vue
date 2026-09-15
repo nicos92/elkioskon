@@ -391,7 +391,7 @@ function clienteNombre(venta: VentaWithDetalle): string {
 
 .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
@@ -418,7 +418,7 @@ function clienteNombre(venta: VentaWithDetalle): string {
 }
 
 .status-activa {
-    color: #38a169;
+    color: var(--color-success);
     font-weight: 500;
 }
 

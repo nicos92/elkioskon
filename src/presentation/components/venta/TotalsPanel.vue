@@ -59,8 +59,8 @@ const emit = defineEmits<{
 }
 
 .total-final {
-    background: #2D195D;
-    color: white;
+    background: var(--color-success);
+    color: var(--color-on-success);
 }
 
 .total-label {

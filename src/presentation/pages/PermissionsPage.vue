@@ -84,7 +84,7 @@ onMounted(async () => {
 
 .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
@@ -138,7 +138,7 @@ onMounted(async () => {
 }
 
 .permissions-list li.empty {
-    color: #999;
+    color: var(--color-text-muted);
     font-style: italic;
 }
 

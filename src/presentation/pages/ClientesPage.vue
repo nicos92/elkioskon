@@ -265,14 +265,14 @@ async function handleDelete(cliente: Cliente) {
     padding: 0.15rem 0.5rem;
     font-size: 0.7rem;
     border-radius: 999px;
-    background: rgba(102, 126, 234, 0.15);
-    color: #9A7EDD;
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
 }
 
 .validation-hint {
-    color: #b7791f;
-    background: rgba(183, 121, 31, 0.1);
-    border: 1px solid rgba(183, 121, 31, 0.3);
+    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
     padding: 0.5rem 0.75rem;
     border-radius: 6px;
     margin-bottom: 1rem;

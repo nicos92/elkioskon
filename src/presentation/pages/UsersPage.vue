@@ -356,7 +356,7 @@ function openPermissionsModal(user: User) {
 
 .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-primary);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
@@ -383,7 +383,7 @@ function openPermissionsModal(user: User) {
 }
 
 .status-active {
-    color: #38a169;
+    color: var(--color-success);
     font-weight: 500;
 }
 

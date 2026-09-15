@@ -260,7 +260,7 @@ async function handleDelete(id: number) {
     padding: 0.15rem 0.5rem;
     font-size: 0.7rem;
     border-radius: 999px;
-    background: rgba(102, 126, 234, 0.15);
-    color: #9A7EDD;
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
 }
 </style>
