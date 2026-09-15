@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "calise-app",
+  "productName": "el-kioskon-app",
   "version": "0.3.0",
-  "identifier": "com.nicos92.tauri-uno",
+  "identifier": "com.elkioskon.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Casa Calise App",
+        "title": "El Kioskon App",
         "width": 800,
         "height": 600,
         "resizable": true,

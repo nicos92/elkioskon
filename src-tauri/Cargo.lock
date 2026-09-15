@@ -3,28 +3,6 @@
 version = 4
 
 [[package]]
-name = "Calise-App"
-version = "0.3.0"
-dependencies = [
- "bcrypt",
- "chrono",
- "directories",
- "mockall",
- "once_cell",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "serial_test",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -931,6 +909,28 @@ name = "dyn-clone"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
+
+[[package]]
+name = "el-kioskon-app"
+version = "0.3.0"
+dependencies = [
+ "bcrypt",
+ "chrono",
+ "directories",
+ "mockall",
+ "once_cell",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+]
 
 [[package]]
 name = "embed-resource"

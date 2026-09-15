@@ -38,7 +38,7 @@ async function handleLogin() {
 <template>
     <div class="login-container">
         <div class="login-inner">
-            <h1 v-if="!dbReady" class="app-name">Casa Calise App</h1>
+            <h1 v-if="!dbReady" class="app-name">El Kioskon App</h1>
 
             <transition name="fade-slide">
                 <div v-if="dbReady" class="login-card">
@@ -126,7 +126,7 @@ async function handleLogin() {
     left: 50%;
     top: 50%;
     transform: translate(-70%, -50%);
-    background-image: url("/lightBulb.svg");
+    background-image: url("/tienda-1024.png");
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;

@@ -120,7 +120,7 @@ function isActive(name: string): boolean {
         <aside :class="['sidebar', { collapsed: !isSidebarOpen }]">
             <div class="sidebar-header">
                 <h2 v-if="isSidebarOpen">
-                    Casa Calise App
+                    El Kioskon App
                 </h2>
                 <button
                     @click="isSidebarOpen = !isSidebarOpen"
@@ -149,7 +149,7 @@ function isActive(name: string): boolean {
             </nav>
 
             <div class="sidebar-footer">
-                <span class="footer-hint">Calise App</span>
+                <span class="footer-hint">Kioskon App</span>
             </div>
         </aside>
 
