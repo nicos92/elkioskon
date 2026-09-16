@@ -20,11 +20,11 @@ pub fn get_db_path() -> PathBuf {
         }
     }
 
-    if let Some(proj_dirs) = ProjectDirs::from("com", "elkioskon", "app") {
+    if let Some(proj_dirs) = ProjectDirs::from("", "", "com.elkioskon.app") {
         let data_dir = proj_dirs.data_dir();
         std::fs::create_dir_all(data_dir).ok();
-        data_dir.join("app.db")
+        data_dir.join("el-kioskon-app.db")
     } else {
-        PathBuf::from("app.db")
+        PathBuf::from("el-kioskon-app.db")
     }
 }
