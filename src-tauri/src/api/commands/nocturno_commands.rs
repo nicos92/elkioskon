@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, NocturnoConfigService};
+use crate::application::services::{log_audit, AuditDetail, NocturnoConfigService};
 use crate::domain::entities::{AuditAction, AuditScreen, NocturnoConfig, PermissionCode};
 use crate::infrastructure::error::AppError;
 
@@ -63,15 +63,19 @@ pub fn save_nocturno_config(
         hora_inicio: request.hora_inicio,
         hora_fin: request.hora_fin,
     };
+    let antes = service.get()?;
     service.save(&config)?;
+    let detail = AuditDetail::new("recargo_nocturno", "Recargo nocturno")
+        .cambio("activo", antes.activo, config.activo)
+        .cambio("porcentaje", antes.porcentaje, config.porcentaje)
+        .cambio("hora_inicio", antes.hora_inicio, config.hora_inicio)
+        .cambio("hora_fin", antes.hora_fin, config.hora_fin)
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Configuracion,
         AuditAction::Update,
-        Some(format!(
-            "Recargo nocturno: activo={}, porcentaje={}%, {}–{}",
-            config.activo, config.porcentaje, config.hora_inicio, config.hora_fin
-        )),
+        Some(detail),
     )?;
     Ok(())
 }

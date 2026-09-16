@@ -1,9 +1,12 @@
 use std::sync::Mutex;
 use tauri::State;
 
+use rusqlite::params;
+
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, ArticuloService};
+use crate::application::services::{log_audit, AuditDetail, ArticuloService};
 use crate::domain::entities::{Articulo, AuditAction, AuditScreen, PermissionCode};
+use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
 
 pub struct ArticuloAppState {
@@ -76,8 +79,12 @@ pub fn create_articulo(
         AuditScreen::Articulos,
         AuditAction::Create,
         Some(format!(
-            "Artículo: {} ({}) (id {})",
-            result.articulo, result.cod_articulo, result.id
+            "Artículo creado: {} (cód. {}) sub-categoría {}, proveedor {} (id {})",
+            result.articulo,
+            result.cod_articulo,
+            sub_categoria_name(result.id_sub_categoria)?,
+            proveedor_name(result.id_proveedor)?,
+            result.id
         )),
     )?;
     Ok(result)
@@ -94,6 +101,7 @@ pub fn update_articulo(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::UpdateArticulo)?;
+    let antes = service.get_by_id(request.id)?;
     let result = service.update(
         request.id,
         request.articulo,
@@ -101,14 +109,26 @@ pub fn update_articulo(
         request.id_sub_categoria,
         request.id_proveedor,
     )?;
+    let descripcion = format!("{} (cód. {})", result.articulo, result.cod_articulo);
+    let detail = AuditDetail::new("articulo", descripcion)
+        .cambio("articulo", &antes.articulo, &result.articulo)
+        .cambio("cod_articulo", &antes.cod_articulo, &result.cod_articulo)
+        .cambio(
+            "sub_categoria",
+            sub_categoria_name(antes.id_sub_categoria)?,
+            sub_categoria_name(result.id_sub_categoria)?,
+        )
+        .cambio(
+            "proveedor",
+            proveedor_name(antes.id_proveedor)?,
+            proveedor_name(result.id_proveedor)?,
+        )
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Articulos,
         AuditAction::Update,
-        Some(format!(
-            "Artículo: {} ({}) (id {})",
-            result.articulo, result.cod_articulo, result.id
-        )),
+        Some(detail),
     )?;
     Ok(result)
 }
@@ -124,12 +144,44 @@ pub fn delete_articulo(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteArticulo)?;
+    let antes = service.get_by_id(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::Articulos,
         AuditAction::Delete,
-        Some(format!("Artículo (id {})", id)),
+        Some(format!(
+            "Artículo eliminado: {} (cód. {}) (id {})",
+            antes.articulo, antes.cod_articulo, id
+        )),
     )?;
     Ok(())
+}
+
+fn sub_categoria_name(id: i64) -> Result<String, AppError> {
+    let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+
+    let name: String = conn
+        .query_row(
+            "SELECT sub_categoria FROM sub_categorias WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(name)
+}
+
+fn proveedor_name(id: i64) -> Result<String, AppError> {
+    let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+
+    let name: String = conn
+        .query_row(
+            "SELECT nombre FROM proveedores WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(name)
 }

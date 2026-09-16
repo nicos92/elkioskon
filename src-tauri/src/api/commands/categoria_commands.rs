@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, CategoriaService};
+use crate::application::services::{log_audit, AuditDetail, CategoriaService};
 use crate::domain::entities::{AuditAction, AuditScreen, Categoria, PermissionCode};
 use crate::infrastructure::error::AppError;
 
@@ -65,7 +65,7 @@ pub fn create_categoria(
         AuditScreen::Categorias,
         AuditAction::Create,
         Some(format!(
-            "Categoría: {} (id {})",
+            "Categoría creada: {} (id {})",
             result.categoria, result.id
         )),
     )?;
@@ -83,15 +83,16 @@ pub fn update_categoria(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::UpdateCategoria)?;
+    let antes = service.get_by_id(request.id)?;
     let result = service.update(request.id, request.categoria)?;
+    let detail = AuditDetail::new("categoria", format!("{} (id {})", result.categoria, result.id))
+        .cambio("categoria", &antes.categoria, &result.categoria)
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Categorias,
         AuditAction::Update,
-        Some(format!(
-            "Categoría: {} (id {})",
-            result.categoria, result.id
-        )),
+        Some(detail),
     )?;
     Ok(result)
 }
@@ -107,12 +108,16 @@ pub fn delete_categoria(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteCategoria)?;
+    let antes = service.get_by_id(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::Categorias,
         AuditAction::Delete,
-        Some(format!("Categoría (id {})", id)),
+        Some(format!(
+            "Categoría eliminada: {} (id {})",
+            antes.categoria, id
+        )),
     )?;
     Ok(())
 }

@@ -1,9 +1,12 @@
 use std::sync::Mutex;
 use tauri::State;
 
+use rusqlite::params;
+
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, StockService};
+use crate::application::services::{log_audit, AuditDetail, StockService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, Stock};
+use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
 
 pub struct StockAppState {
@@ -95,13 +98,14 @@ pub fn create_stock(
         request.costo,
         request.ganancia,
     )?;
+    let label = articulo_label(result.id_articulo)?;
     log_audit(
         user_id,
         AuditScreen::Stock,
         AuditAction::Create,
         Some(format!(
-            "Stock artículo {} (id {})",
-            result.id_articulo, result.id
+            "Stock creado: {}, cantidad={}, costo={}, ganancia={}",
+            label, result.cantidad, result.costo, result.ganancia
         )),
     )?;
     Ok(result)
@@ -118,21 +122,20 @@ pub fn update_stock(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::UpdateStock)?;
+    let antes = service.get_by_id(request.id)?;
     let result = service.update(
         request.id,
         request.cantidad,
         request.costo,
         request.ganancia,
     )?;
-    log_audit(
-        user_id,
-        AuditScreen::Stock,
-        AuditAction::Update,
-        Some(format!(
-            "Stock artículo {} (id {})",
-            result.id_articulo, result.id
-        )),
-    )?;
+    let label = articulo_label(result.id_articulo)?;
+    let detail = AuditDetail::new("stock", label)
+        .cambio("cantidad", antes.cantidad, result.cantidad)
+        .cambio("costo", antes.costo, result.costo)
+        .cambio("ganancia", antes.ganancia, result.ganancia)
+        .to_json();
+    log_audit(user_id, AuditScreen::Stock, AuditAction::Update, Some(detail))?;
     Ok(result)
 }
 
@@ -143,12 +146,13 @@ pub fn delete_stock(user_id: i64, id: i64, state: State<StockAppState>) -> Resul
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteStock)?;
+    let label = articulo_label_by_stock(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::Stock,
         AuditAction::Delete,
-        Some(format!("Stock (id {})", id)),
+        Some(format!("Stock eliminado: {}", label)),
     )?;
     Ok(())
 }
@@ -165,4 +169,29 @@ pub fn get_precio_venta(
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::ViewStock)?;
     service.get_precio_venta(id)
+}
+
+fn articulo_label(id_articulo: i64) -> Result<String, AppError> {
+    query_articulo_label("SELECT articulo, cod_articulo FROM articulos WHERE id = ?1", id_articulo)
+}
+
+fn articulo_label_by_stock(id_stock: i64) -> Result<String, AppError> {
+    query_articulo_label(
+        "SELECT a.articulo, a.cod_articulo
+         FROM stock s JOIN articulos a ON a.id = s.id_articulo
+         WHERE s.id = ?1",
+        id_stock,
+    )
+}
+
+fn query_articulo_label(sql: &str, param: i64) -> Result<String, AppError> {
+    let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+
+    let (articulo, cod): (String, String) = conn
+        .query_row(sql, params![param], |row| {
+            Ok((row.get(0)?, row.get(1)?))
+        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(format!("{} (cód. {})", articulo, cod))
 }

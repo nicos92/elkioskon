@@ -96,7 +96,13 @@ pub fn create_venta(
         user_id,
         AuditScreen::Ventas,
         AuditAction::Create,
-        Some(format!("Venta (id {})", venta.id)),
+        Some(format!(
+            "Venta creada: id {}, total=${}, {} ítems, cliente {}",
+            venta.id,
+            venta.total,
+            venta.items.len(),
+            venta_cliente_label(&venta.cliente_nombre, &venta.cliente_apellido)
+        )),
     )?;
     Ok(venta)
 }
@@ -152,12 +158,30 @@ pub fn anular_venta(user_id: i64, id: i64, state: State<VentaAppState>) -> Resul
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::AnularVenta)?;
+    let antes = service.get_by_id(id)?;
     service.anular(id)?;
     log_audit(
         user_id,
         AuditScreen::Ventas,
         AuditAction::Update,
-        Some(format!("Venta (id {}) anulada", id)),
+        Some(format!(
+            "Venta {} anulada (total=${}, {} ítems, cliente {})",
+            id,
+            antes.total,
+            antes.items.len(),
+            venta_cliente_label(&antes.cliente_nombre, &antes.cliente_apellido)
+        )),
     )?;
     Ok(())
+}
+
+fn venta_cliente_label(nombre: &Option<String>, apellido: &Option<String>) -> String {
+    let n = nombre.as_deref().unwrap_or("");
+    let a = apellido.as_deref().unwrap_or("");
+    let label = format!("{} {}", n, a).trim().to_string();
+    if label.is_empty() {
+        "-".to_string()
+    } else {
+        label
+    }
 }

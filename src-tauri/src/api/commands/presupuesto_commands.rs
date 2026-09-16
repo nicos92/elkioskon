@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, PresupuestoService};
+use crate::application::services::{log_audit, AuditDetail, PresupuestoService};
 use crate::domain::entities::{
     AuditAction, AuditScreen, PermissionCode, PresupuestoDetalle, PresupuestoEstado,
     PresupuestoWithDetalle,
@@ -97,7 +97,13 @@ pub fn crear_presupuesto(
         user_id,
         AuditScreen::Presupuestos,
         AuditAction::Create,
-        Some(format!("Presupuesto (id {})", presupuesto.id)),
+        Some(format!(
+            "Presupuesto creado: id {}, total=${}, {} ítems, cliente {}",
+            presupuesto.id,
+            presupuesto.total,
+            presupuesto.items.len(),
+            cliente_label(&presupuesto.cliente_nombre, &presupuesto.cliente_apellido)
+        )),
     )?;
     Ok(presupuesto)
 }
@@ -135,16 +141,21 @@ pub fn cambiar_estado_presupuesto(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::GenerarPresupuesto)?;
+    let antes = service.get_by_id(request.id)?;
     service.cambiar_estado(request.id, request.estado)?;
+    let descripcion = format!(
+        "Presupuesto id {} (cliente {})",
+        request.id,
+        cliente_label(&antes.cliente_nombre, &antes.cliente_apellido)
+    );
+    let detail = AuditDetail::new("presupuesto", descripcion)
+        .cambio("estado", &antes.estado, request.estado.as_str())
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Presupuestos,
         AuditAction::Update,
-        Some(format!(
-            "Presupuesto (id {}) -> estado {}",
-            request.id,
-            request.estado.as_str()
-        )),
+        Some(detail),
     )?;
     Ok(())
 }
@@ -161,4 +172,15 @@ pub fn get_presupuesto_by_id(
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::GenerarPresupuesto)?;
     service.get_by_id(id)
+}
+
+fn cliente_label(nombre: &Option<String>, apellido: &Option<String>) -> String {
+    let n = nombre.as_deref().unwrap_or("");
+    let a = apellido.as_deref().unwrap_or("");
+    let label = format!("{} {}", n, a).trim().to_string();
+    if label.is_empty() {
+        "-".to_string()
+    } else {
+        label
+    }
 }

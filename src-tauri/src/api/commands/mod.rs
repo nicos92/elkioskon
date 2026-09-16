@@ -1,11 +1,14 @@
 use std::sync::Mutex;
 use tauri::State;
 
+use rusqlite::params;
+
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, UserService};
+use crate::application::services::{log_audit, AuditDetail, UserService};
 use crate::domain::entities::{
     AuditAction, AuditScreen, Permission, PermissionCode, User, UserPermission,
 };
+use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
 
 pub mod articulo_commands;
@@ -195,7 +198,7 @@ pub fn create_user(
         user_id,
         AuditScreen::Usuarios,
         AuditAction::Create,
-        Some(format!("Usuario: {} (id {})", user.username, user.id)),
+        Some(format!("Usuario creado: {} (id {})", user.username, user.id)),
     )?;
     Ok(user.into())
 }
@@ -222,12 +225,17 @@ pub fn update_user(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::UpdateUser)?;
+    let antes = service.get_user(request.id)?;
     let user = service.update_user(request.id, request.username, request.active)?;
+    let detail = AuditDetail::new("usuario", format!("{} (id {})", user.username, user.id))
+        .cambio("username", &antes.username, &user.username)
+        .cambio("activo", antes.active, user.active)
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Usuarios,
         AuditAction::Update,
-        Some(format!("Usuario: {} (id {})", user.username, user.id)),
+        Some(detail),
     )?;
     Ok(user.into())
 }
@@ -247,6 +255,7 @@ pub fn change_password(
         check_permission(user_id, PermissionCode::ChangeUserPassword)?;
     }
 
+    let target = service.get_user(request.target_user_id)?;
     let user = service.change_password(
         user_id,
         request.target_user_id,
@@ -259,8 +268,8 @@ pub fn change_password(
         AuditScreen::Usuarios,
         AuditAction::Update,
         Some(format!(
-            "Contraseña actualizada (usuario id {})",
-            request.target_user_id
+            "Contraseña actualizada para el usuario {} (id {})",
+            target.username, request.target_user_id
         )),
     )?;
     Ok(user.into())
@@ -273,12 +282,13 @@ pub fn delete_user(user_id: i64, id: i64, state: State<AppState>) -> Result<(), 
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteUser)?;
+    let antes = service.get_user(id)?;
     service.delete_user(user_id, id)?;
     log_audit(
         user_id,
         AuditScreen::Usuarios,
         AuditAction::Delete,
-        Some(format!("Usuario (id {})", id)),
+        Some(format!("Usuario eliminado: {} (id {})", antes.username, id)),
     )?;
     Ok(())
 }
@@ -295,13 +305,15 @@ pub fn add_permission_to_user(
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::AssignPermission)?;
     service.add_permission_to_user(request.user_id, request.permission_id)?;
+    let perm = permission_code_by_id(request.permission_id)?;
+    let target = service.get_user(request.user_id)?;
     log_audit(
         user_id,
         AuditScreen::Permisos,
         AuditAction::Update,
         Some(format!(
-            "Permiso (id {}) asignado al usuario (id {})",
-            request.permission_id, request.user_id
+            "Permiso {} asignado al usuario {} (id {})",
+            perm, target.username, request.user_id
         )),
     )?;
     Ok(())
@@ -319,13 +331,15 @@ pub fn remove_permission_from_user(
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::RemovePermission)?;
     service.remove_permission_from_user(request.user_id, request.permission_id)?;
+    let perm = permission_code_by_id(request.permission_id)?;
+    let target = service.get_user(request.user_id)?;
     log_audit(
         user_id,
         AuditScreen::Permisos,
         AuditAction::Update,
         Some(format!(
-            "Permiso (id {}) quitado al usuario (id {})",
-            request.permission_id, request.user_id
+            "Permiso {} quitado al usuario {} (id {})",
+            perm, target.username, request.user_id
         )),
     )?;
     Ok(())
@@ -380,4 +394,18 @@ pub fn create_permission(
         )),
     )?;
     Ok(permission)
+}
+
+fn permission_code_by_id(id: i64) -> Result<String, AppError> {
+    let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+
+    let name: String = conn
+        .query_row(
+            "SELECT permission FROM permissions WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(name)
 }

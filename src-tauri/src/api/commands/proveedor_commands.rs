@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, ProveedorService};
+use crate::application::services::{log_audit, opt_str, AuditDetail, ProveedorService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, Proveedor};
 use crate::infrastructure::error::AppError;
 
@@ -95,10 +95,7 @@ pub fn create_proveedor(
         user_id,
         AuditScreen::Proveedores,
         AuditAction::Create,
-        Some(format!(
-            "Proveedor: {} ({}) (id {})",
-            result.proveedor, result.nombre, result.id
-        )),
+        Some(format!("Proveedor creado: {}", proveedor_label(&result))),
     )?;
     Ok(result)
 }
@@ -123,15 +120,21 @@ pub fn update_proveedor(
         email: request.email,
         observacion: request.observacion,
     };
+    let antes = service.get_by_id(request.id)?;
     let result = service.update(&proveedor)?;
+    let detail = AuditDetail::new("proveedor", proveedor_label(&result))
+        .cambio("proveedor", &antes.proveedor, &result.proveedor)
+        .cambio("nombre", &antes.nombre, &result.nombre)
+        .cambio("cuit", opt_str(&antes.cuit), opt_str(&result.cuit))
+        .cambio("tel", opt_str(&antes.tel), opt_str(&result.tel))
+        .cambio("email", opt_str(&antes.email), opt_str(&result.email))
+        .cambio("observacion", opt_str(&antes.observacion), opt_str(&result.observacion))
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Proveedores,
         AuditAction::Update,
-        Some(format!(
-            "Proveedor: {} ({}) (id {})",
-            result.proveedor, result.nombre, result.id
-        )),
+        Some(detail),
     )?;
     Ok(result)
 }
@@ -147,12 +150,21 @@ pub fn delete_proveedor(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteProveedor)?;
+    let antes = service.get_by_id(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::Proveedores,
         AuditAction::Delete,
-        Some(format!("Proveedor (id {})", id)),
+        Some(format!(
+            "Proveedor eliminado: {}",
+            proveedor_label(&antes)
+        )),
     )?;
     Ok(())
+}
+
+fn proveedor_label(p: &Proveedor) -> String {
+    let cuit = p.cuit.as_deref().unwrap_or("-");
+    format!("{} ({}) cuit={} (id {})", p.proveedor, p.nombre, cuit, p.id)
 }

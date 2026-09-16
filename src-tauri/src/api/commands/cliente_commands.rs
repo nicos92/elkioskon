@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, ClienteService};
+use crate::application::services::{log_audit, opt_str, AuditDetail, ClienteService};
 use crate::domain::entities::{AuditAction, AuditScreen, Cliente, PermissionCode};
 use crate::infrastructure::error::AppError;
 
@@ -106,8 +106,8 @@ pub fn crear_cliente(
         AuditScreen::Clientes,
         AuditAction::Create,
         Some(format!(
-            "Cliente: {} (id {})",
-            result.nombre.as_deref().unwrap_or(""),
+            "Cliente creado: {} (id {})",
+            cliente_label(&result),
             result.id
         )),
     )?;
@@ -135,16 +135,20 @@ pub fn actualizar_cliente(
         created_at: String::new(),
         updated_at: String::new(),
     };
+    let antes = service.get_by_id(request.id)?;
     let result = service.update(&cliente)?;
+    let detail = AuditDetail::new("cliente", format!("{} (id {})", cliente_label(&result), result.id))
+        .cambio("nombre", opt_str(&antes.nombre), opt_str(&result.nombre))
+        .cambio("apellido", opt_str(&antes.apellido), opt_str(&result.apellido))
+        .cambio("telefono", opt_str(&antes.telefono), opt_str(&result.telefono))
+        .cambio("email", opt_str(&antes.email), opt_str(&result.email))
+        .cambio("direccion", opt_str(&antes.direccion), opt_str(&result.direccion))
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::Clientes,
         AuditAction::Update,
-        Some(format!(
-            "Cliente: {} (id {})",
-            result.nombre.as_deref().unwrap_or(""),
-            result.id
-        )),
+        Some(detail),
     )?;
     Ok(result)
 }
@@ -160,12 +164,28 @@ pub fn eliminar_cliente(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteCliente)?;
+    let antes = service.get_by_id(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::Clientes,
         AuditAction::Delete,
-        Some(format!("Cliente (id {})", id)),
+        Some(format!(
+            "Cliente eliminado: {} (id {})",
+            cliente_label(&antes),
+            id
+        )),
     )?;
     Ok(())
+}
+
+fn cliente_label(c: &Cliente) -> String {
+    let nombre = c.nombre.as_deref().unwrap_or("");
+    let apellido = c.apellido.as_deref().unwrap_or("");
+    let label = format!("{} {}", nombre, apellido).trim().to_string();
+    if label.is_empty() {
+        "(sin nombre)".to_string()
+    } else {
+        label
+    }
 }

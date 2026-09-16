@@ -51,11 +51,18 @@ pub async fn fetch_dollar_rates_manual(
         .clone();
     service.fetch_and_persist().await?;
     let history = service.get_history()?;
+    let detail = match history.first() {
+        Some(quote) => format!(
+            "Cotización del dólar actualizada manualmente: oficial {}/{} — blue {}/{}",
+            quote.official_buy, quote.official_sell, quote.blue_buy, quote.blue_sell
+        ),
+        None => "Cotización del dólar actualizada manualmente (sin datos)".to_string(),
+    };
     log_audit(
         user_id,
         AuditScreen::Dolar,
         AuditAction::Update,
-        Some("Cotización del dólar actualizada manualmente".to_string()),
+        Some(detail),
     )?;
     Ok(history)
 }
@@ -71,13 +78,22 @@ pub fn delete_dollar_quote(
         .dollar_service
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
+    let antes = service
+        .get_history()?
+        .into_iter()
+        .find(|q| q.id == id)
+        .map(|q| format!(
+            "Cotización del dólar id={} eliminada (oficial {}/{}, blue {}/{})",
+            id, q.official_buy, q.official_sell, q.blue_buy, q.blue_sell
+        ))
+        .unwrap_or_else(|| format!("Cotización del dólar id={} eliminada", id));
     service.delete(id)?;
     let history = service.get_history()?;
     log_audit(
         user_id,
         AuditScreen::Dolar,
         AuditAction::Delete,
-        Some(format!("Cotización del dólar id={id} eliminada")),
+        Some(antes),
     )?;
     Ok(history)
 }

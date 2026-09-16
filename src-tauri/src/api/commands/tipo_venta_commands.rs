@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use tauri::State;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, TipoVentaService};
+use crate::application::services::{log_audit, opt_str, AuditDetail, TipoVentaService};
 use crate::domain::entities::{AuditAction, AuditScreen, PermissionCode, TipoVenta};
 use crate::infrastructure::error::AppError;
 
@@ -60,7 +60,7 @@ pub fn create_tipo_venta(
         AuditScreen::TiposVenta,
         AuditAction::Create,
         Some(format!(
-            "Tipo de venta: {} (id {})",
+            "Tipo de venta creado: {} (id {})",
             result.nombre, result.id
         )),
     )?;
@@ -79,15 +79,17 @@ pub fn update_tipo_venta(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::UpdateTipoVenta)?;
+    let antes = service.get_by_id(id)?;
     let result = service.update(id, request.nombre, request.hacia_donde)?;
+    let detail = AuditDetail::new("tipo_venta", format!("{} (id {})", result.nombre, result.id))
+        .cambio("nombre", &antes.nombre, &result.nombre)
+        .cambio("hacia_donde", opt_str(&antes.hacia_donde), opt_str(&result.hacia_donde))
+        .to_json();
     log_audit(
         user_id,
         AuditScreen::TiposVenta,
         AuditAction::Update,
-        Some(format!(
-            "Tipo de venta: {} (id {})",
-            result.nombre, result.id
-        )),
+        Some(detail),
     )?;
     Ok(result)
 }
@@ -103,12 +105,16 @@ pub fn delete_tipo_venta(
         .lock()
         .map_err(|e| AppError::Internal(e.to_string()))?;
     check_permission(user_id, PermissionCode::DeleteTipoVenta)?;
+    let antes = service.get_by_id(id)?;
     service.delete(id)?;
     log_audit(
         user_id,
         AuditScreen::TiposVenta,
         AuditAction::Delete,
-        Some(format!("Tipo de venta (id {})", id)),
+        Some(format!(
+            "Tipo de venta eliminado: {} (id {})",
+            antes.nombre, id
+        )),
     )?;
     Ok(())
 }
