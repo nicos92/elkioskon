@@ -1,4 +1,5 @@
 pub mod articulo_service;
+pub mod audit_detail;
 pub mod audit_log_service;
 pub mod categoria_service;
 pub mod cierre_service;
@@ -16,6 +17,7 @@ pub mod user_service;
 pub mod venta_service;
 
 pub use articulo_service::ArticuloService;
+pub use audit_detail::{opt_str, AuditCambio, AuditDetail};
 pub use audit_log_service::{log_audit, AuditLogService};
 pub use categoria_service::CategoriaService;
 pub use cierre_service::CierreService;
