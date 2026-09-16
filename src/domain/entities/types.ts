@@ -235,6 +235,7 @@ export interface Venta {
   anulada: boolean;
   observacion: string | null;
   created_at: string;
+  porcentaje_nocturno: number;
 }
 
 export interface VentaDetalle {
@@ -273,6 +274,7 @@ export interface VentaWithDetalle {
   cliente_nombre: string | null;
   cliente_apellido: string | null;
   created_at: string;
+  porcentaje_nocturno: number;
   items: VentaDetalleConArticulo[];
 }
 
@@ -412,6 +414,13 @@ export interface DollarQuote {
   blue_buy: number;
   blue_sell: number;
   timestamp: string;
+}
+
+export interface NocturnoConfig {
+  activo: boolean;
+  porcentaje: number;
+  hora_inicio: string;
+  hora_fin: string;
 }
 
 export interface StockBajoItem {

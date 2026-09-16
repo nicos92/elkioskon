@@ -6,6 +6,7 @@ import type {
   IClienteRepository,
   IDollarRepository,
   IHomeRepository,
+  INocturnoConfigRepository,
   IPresupuestoRepository,
   IProveedorRepository,
   IStockRepository,
@@ -21,6 +22,7 @@ import { CierresApiRepository } from "./api/cierreRepository";
 import { ClienteApiRepository } from "./api/clienteRepository";
 import { DollarApiRepository } from "./api/dollarRepository";
 import { HomeApiRepository } from "./api/homeRepository";
+import { NocturnoConfigApiRepository } from "./api/nocturnoRepository";
 import { PresupuestoApiRepository } from "./api/presupuestoRepository";
 import { ProveedorApiRepository } from "./api/proveedorRepository";
 import { StockApiRepository } from "./api/stockRepository";
@@ -50,3 +52,5 @@ export const auditRepository: IAuditRepository = new AuditApiRepository();
 export const cierreRepository: ICierreRepository = new CierresApiRepository();
 export const homeRepository: IHomeRepository = new HomeApiRepository();
 export const dollarRepository: IDollarRepository = new DollarApiRepository();
+export const nocturnoConfigRepository: INocturnoConfigRepository =
+  new NocturnoConfigApiRepository();

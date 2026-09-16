@@ -20,3 +20,24 @@ export function isDefaultProveedor(proveedor: Proveedor): boolean {
 export function calcularPrecioVenta(costo: number, ganancia: number): number {
   return costo * (1 + ganancia / 100);
 }
+
+export function minutosDesdeMedianoche(hhmm: string): number | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(hhmm.trim());
+  if (!match) return null;
+  const hora = Number(match[1]);
+  const minuto = Number(match[2]);
+  if (hora > 23 || minuto > 59) return null;
+  return hora * 60 + minuto;
+}
+
+export function esHorarioNocturno(
+  ahoraMinutos: number,
+  inicioMinutos: number,
+  finMinutos: number,
+): boolean {
+  if (inicioMinutos === finMinutos) return false;
+  if (inicioMinutos < finMinutos) {
+    return ahoraMinutos >= inicioMinutos && ahoraMinutos < finMinutos;
+  }
+  return ahoraMinutos >= inicioMinutos || ahoraMinutos < finMinutos;
+}

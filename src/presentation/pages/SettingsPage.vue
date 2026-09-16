@@ -4,14 +4,18 @@ import { useRouter } from "vue-router";
 import { getVersion } from "@tauri-apps/api/app";
 
 import { useAuthStore } from "../stores";
+import { useNocturnoStore } from "../stores/nocturnoStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useToasts } from "../composables/useToasts";
+import { usePermissions } from "../composables/usePermissions";
 
 const router = useRouter();
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
-const { success: toastSuccess } = useToasts();
+const nocturnoStore = useNocturnoStore();
+const { success: toastSuccess, error: toastError } = useToasts();
+const { canConfigurarRecargoNocturno } = usePermissions();
 
 const appVersion = ref("");
 
@@ -21,7 +25,42 @@ onMounted(async () => {
     } catch {
         appVersion.value = "0.3.0";
     }
+    if (canConfigurarRecargoNocturno()) {
+        await nocturnoStore.fetchConfig();
+        nocturnoActivo.value = nocturnoStore.config.activo;
+        nocturnoPorcentaje.value = nocturnoStore.config.porcentaje;
+        nocturnoInicio.value = nocturnoStore.config.hora_inicio;
+        nocturnoFin.value = nocturnoStore.config.hora_fin;
+    }
 });
+
+async function handleSaveNocturno() {
+    nocturnoError.value = null;
+    const porcentaje = Number(nocturnoPorcentaje.value);
+    if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+        nocturnoError.value = "El porcentaje debe estar entre 0 y 100.";
+        return;
+    }
+    if (nocturnoInicio.value === nocturnoFin.value) {
+        nocturnoError.value = "Las horas de inicio y fin no pueden ser iguales.";
+        return;
+    }
+
+    nocturnoSaving.value = true;
+    const ok = await nocturnoStore.saveConfig({
+        activo: nocturnoActivo.value,
+        porcentaje,
+        hora_inicio: nocturnoInicio.value,
+        hora_fin: nocturnoFin.value,
+    });
+    nocturnoSaving.value = false;
+
+    if (ok) {
+        toastSuccess("Recargo nocturno guardado correctamente.");
+    } else {
+        toastError(nocturnoStore.error || "No se pudo guardar el recargo nocturno.");
+    }
+}
 
 const showPasswordModal = ref(false);
 const currentPassword = ref("");
@@ -29,6 +68,13 @@ const newPassword = ref("");
 const confirmPassword = ref("");
 const isSaving = ref(false);
 const formError = ref<string | null>(null);
+
+const nocturnoActivo = ref(false);
+const nocturnoPorcentaje = ref(0);
+const nocturnoInicio = ref("22:00");
+const nocturnoFin = ref("06:00");
+const nocturnoSaving = ref(false);
+const nocturnoError = ref<string | null>(null);
 
 const theme = computed({
     get: () => themeStore.mode,
@@ -120,6 +166,53 @@ function handleLogout() {
                     <option value="dark">Oscuro</option>
                     <option value="system">Sistema</option>
                 </select>
+            </div>
+        </div>
+
+        <div v-if="canConfigurarRecargoNocturno()" class="settings-section">
+            <h3>Recargo nocturno</h3>
+            <div class="setting-item">
+                <label class="setting-label">
+                    <input
+                        v-model="nocturnoActivo"
+                        type="checkbox"
+                        class="nocturno-checkbox"
+                    />
+                    Activar recargo en horario nocturno
+                </label>
+            </div>
+            <div class="nocturno-grid">
+                <div class="form-group">
+                    <label>Porcentaje de recargo (%)</label>
+                    <input
+                        v-model.number="nocturnoPorcentaje"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                    />
+                </div>
+                <div class="form-group">
+                    <label>Hora de inicio</label>
+                    <input v-model="nocturnoInicio" type="time" />
+                </div>
+                <div class="form-group">
+                    <label>Hora de fin</label>
+                    <input v-model="nocturnoFin" type="time" />
+                </div>
+            </div>
+            <div v-if="nocturnoError" class="error-message">
+                {{ nocturnoError }}
+            </div>
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    @click="handleSaveNocturno"
+                    class="btn-primary"
+                    :disabled="nocturnoSaving || nocturnoStore.isLoading"
+                >
+                    {{ nocturnoSaving ? "Guardando..." : "Guardar" }}
+                </button>
             </div>
         </div>
 
@@ -317,6 +410,29 @@ h1 {
     border-radius: 6px;
     background: var(--color-surface);
     color: var(--color-text);
+}
+
+.nocturno-checkbox {
+    width: auto;
+    margin-right: 0.5rem;
+    accent-color: var(--color-primary);
+}
+
+.nocturno-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.nocturno-grid input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-sizing: border-box;
 }
 
 .modal-actions {

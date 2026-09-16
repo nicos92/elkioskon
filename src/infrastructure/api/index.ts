@@ -6,6 +6,7 @@ export * from "./clienteRepository";
 export * from "./dollarRepository";
 export * from "./errorHandler";
 export * from "./homeRepository";
+export * from "./nocturnoRepository";
 export * from "./presupuestoRepository";
 export * from "./proveedorRepository";
 export * from "./stockRepository";

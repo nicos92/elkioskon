@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import {
   useVentasStore,
@@ -8,6 +8,7 @@ import {
   useTiposVentaStore,
   useClientesStore,
   usePresupuestosStore,
+  useNocturnoStore,
 } from "../stores";
 import { usePermissions } from "../composables/usePermissions";
 import { useToasts } from "../composables/useToasts";
@@ -19,7 +20,11 @@ import type {
   CreatePresupuestoRequest,
   CreateVentaRequest,
 } from "../../domain/entities";
-import { calcularPrecioVenta } from "../../domain/entities";
+import {
+  calcularPrecioVenta,
+  esHorarioNocturno,
+  minutosDesdeMedianoche,
+} from "../../domain/entities";
 import ArticuloSearch from "../components/venta/ArticuloSearch.vue";
 import CartTable from "../components/venta/CartTable.vue";
 import ClienteSelector from "../components/venta/ClienteSelector.vue";
@@ -34,6 +39,7 @@ const articulosStore = useArticulosStore();
 const tiposVentaStore = useTiposVentaStore();
 const clientesStore = useClientesStore();
 const presupuestosStore = usePresupuestosStore();
+const nocturnoStore = useNocturnoStore();
 const {
   canVenderSinStock,
   canGenerarPresupuesto,
@@ -95,10 +101,30 @@ const articulosVendibles = computed<CartSourceItem[]>(() => {
   });
 });
 
+function horaActualEnMinutos(): number {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+}
+
+const minutosActuales = ref(horaActualEnMinutos());
+let relojTimer: number | undefined;
+
+const porcentajeNocturnoActual = computed(() => {
+    const cfg = nocturnoStore.config;
+    if (!cfg.activo || cfg.porcentaje <= 0) return 0;
+    const inicio = minutosDesdeMedianoche(cfg.hora_inicio);
+    const fin = minutosDesdeMedianoche(cfg.hora_fin);
+    if (inicio === null || fin === null) return 0;
+    return esHorarioNocturno(minutosActuales.value, inicio, fin)
+        ? cfg.porcentaje
+        : 0;
+});
+
 const cartLogic = useCart({
   getVendibles: () => articulosVendibles.value,
   canVenderSinStock,
   getTipoVentaId: () => tipoVentaId.value,
+  getRecargoNocturno: () => porcentajeNocturnoActual.value,
   focusInput: () => articuloSearchRef.value?.focus(),
 });
 
@@ -110,6 +136,9 @@ const {
   carritoSubtotal,
   descuentoMonto,
   carritoTotal,
+  recargoNocturnoPorcentaje,
+  recargoNocturnoMonto,
+  carritoTotalConRecargo,
   carritoValido,
   presupuestoValido,
   focusSearch,
@@ -130,8 +159,13 @@ onMounted(async () => {
     stockStore.fetchStock(),
     articulosStore.fetchArticulos(),
     tiposVentaStore.fetchTiposVenta(),
+    nocturnoStore.fetchConfig(),
     canViewClientes() ? clientesStore.fetchClientes() : Promise.resolve(),
   ]);
+  minutosActuales.value = horaActualEnMinutos();
+  relojTimer = window.setInterval(() => {
+    minutosActuales.value = horaActualEnMinutos();
+  }, 60000);
   await ventasStore.checkDiaCerrado();
   if (canViewClientes()) {
     const clienteDef = await clientesStore.getClienteDefecto();
@@ -143,6 +177,12 @@ onMounted(async () => {
     await cargarPresupuesto(Number(presupuestoId));
   }
   focusSearch();
+});
+
+onUnmounted(() => {
+  if (relojTimer !== undefined) {
+    window.clearInterval(relojTimer);
+  }
 });
 
 function quitarPresupuesto() {
@@ -446,7 +486,9 @@ function generarPdf() {
                 :subtotal="carritoSubtotal"
                 :descuento="descuento"
                 :descuento-monto="descuentoMonto"
-                :total="carritoTotal"
+                :total="carritoTotalConRecargo"
+                :porcentaje-nocturno="recargoNocturnoPorcentaje"
+                :recargo-nocturno-monto="recargoNocturnoMonto"
                 @update:descuento="descuento = $event"
             />
         </div>

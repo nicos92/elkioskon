@@ -6,6 +6,8 @@ defineProps<{
   descuento: number;
   descuentoMonto: number;
   total: number;
+  porcentajeNocturno?: number;
+  recargoNocturnoMonto?: number;
 }>();
 
 const emit = defineEmits<{
@@ -40,6 +42,15 @@ const emit = defineEmits<{
                 −{{ formatMoney(descuentoMonto) }}
             </span>
         </div>
+    </div>
+    <div
+        v-if="porcentajeNocturno && porcentajeNocturno > 0"
+        class="total-box"
+    >
+        <span class="total-label">Recargo nocturno ({{ porcentajeNocturno }}%)</span>
+        <span class="total-value recargo-value">
+            +{{ formatMoney(recargoNocturnoMonto ?? 0) }}
+        </span>
     </div>
     <div class="total-box total-final">
         <span class="total-label">Total</span>
@@ -94,5 +105,9 @@ const emit = defineEmits<{
 .descuento-monto {
     color: var(--color-danger);
     font-size: 0.9rem;
+}
+
+.recargo-value {
+    color: var(--color-warning);
 }
 </style>
