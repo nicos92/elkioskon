@@ -1,12 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useAuditStore } from "../stores";
 import { usePagination } from "../composables/usePagination";
 import PaginationBar from "../components/PaginationBar.vue";
 import { dayStartToISO, dayEndToISO } from "../utils/date";
+import {
+    parseAuditDetail,
+    auditFieldLabel,
+    formatAuditValue,
+} from "../utils/auditDetail";
 import type { AuditLogFilters } from "../../domain/entities";
 
 const auditStore = useAuditStore();
+
+const details = computed(
+    () =>
+        new Map(
+            auditStore.logs.map(
+                (log) => [log.id, parseAuditDetail(log.detail)] as const,
+            ),
+        ),
+);
 
 const screen = ref("");
 const action = ref("");
@@ -160,7 +174,32 @@ onMounted(() => {
                             {{ log.action }}
                         </span>
                     </td>
-                    <td>{{ log.detail || "-" }}</td>
+                    <td>
+                        <template v-if="details.get(log.id)">
+                            <div class="audit-detail">
+                                <div class="audit-desc">
+                                    {{ details.get(log.id)!.descripcion }}
+                                </div>
+                                <div
+                                    v-for="cambio in details.get(log.id)!.cambios"
+                                    :key="cambio.campo"
+                                    class="audit-change"
+                                >
+                                    <span class="audit-field">
+                                        {{ auditFieldLabel(cambio.campo) }}
+                                    </span>
+                                    <span class="audit-value audit-old">
+                                        {{ formatAuditValue(cambio.campo, cambio.antes) }}
+                                    </span>
+                                    <span class="audit-arrow">→</span>
+                                    <span class="audit-value audit-new">
+                                        {{ formatAuditValue(cambio.campo, cambio.valor) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                        <span v-else>{{ log.detail || "-" }}</span>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -294,6 +333,48 @@ select.filter-input {
 .badge-eliminar {
     background: rgba(var(--color-danger-rgb), 0.15);
     color: var(--color-danger);
+}
+
+.audit-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85rem;
+}
+
+.audit-desc {
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.audit-change {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.audit-field {
+    color: var(--color-text-muted);
+    min-width: 6.5rem;
+}
+
+.audit-arrow {
+    color: var(--color-primary);
+}
+
+.audit-value {
+    white-space: nowrap;
+}
+
+.audit-old {
+    text-decoration: line-through;
+    color: var(--color-text-muted);
+}
+
+.audit-new {
+    font-weight: 600;
+    color: var(--color-success);
 }
 
 .error-banner {
