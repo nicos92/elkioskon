@@ -382,7 +382,7 @@ mod tests {
         let repo = SqliteUserRepository::new();
 
         let perms = repo.get_all_permissions().unwrap();
-        assert_eq!(perms.len(), 46);
+        assert_eq!(perms.len(), 47);
         assert!(perms.iter().any(|p| p.permission == "ver_usuarios"));
         assert!(perms.iter().any(|p| p.permission == "ver_clientes"));
     }

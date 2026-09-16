@@ -14,15 +14,16 @@ use api::commands::{
     get_all_cierres, get_all_clientes, get_all_permissions, get_all_presupuestos,
     get_all_proveedores, get_all_stock, get_all_sub_categorias, get_all_tipos_venta, get_all_users,
     get_all_ventas, get_audit_logs, get_cliente_by_id, get_cliente_defecto, get_dollar_quotes,
-    get_home_stats, get_last_undoable_cost_update, get_precio_venta, get_presupuesto_by_id,
-    get_proveedor_by_id, get_stock_by_articulo, get_stock_by_id, get_stock_preview_costo,
-    get_sub_categorias_by_categoria, get_user_permissions, get_venta_by_id, get_ventas_por_cliente,
-    is_dia_cerrado, login, reabrir_cierre, remove_permission_from_user, undo_cost_update,
-    update_articulo, update_categoria, update_proveedor, update_stock, update_sub_categoria,
-    update_tipo_venta, update_user, AppState, ArticuloAppState, AuditLogAppState,
-    CategoriaAppState, CierreAppState, ClienteAppState, CostUpdateAppState, DollarAppState,
-    HomeStatsAppState, PresupuestoAppState, ProveedorAppState, StockAppState, SubCategoriaAppState,
-    TipoVentaAppState, VentaAppState,
+    get_home_stats, get_last_undoable_cost_update, get_nocturno_config, get_precio_venta,
+    get_presupuesto_by_id, get_proveedor_by_id, get_stock_by_articulo, get_stock_by_id,
+    get_stock_preview_costo, get_sub_categorias_by_categoria, get_user_permissions,
+    get_venta_by_id, get_ventas_por_cliente, is_dia_cerrado, login, reabrir_cierre,
+    remove_permission_from_user, save_nocturno_config, undo_cost_update, update_articulo,
+    update_categoria, update_proveedor, update_stock, update_sub_categoria, update_tipo_venta,
+    update_user, AppState, ArticuloAppState, AuditLogAppState, CategoriaAppState, CierreAppState,
+    ClienteAppState, CostUpdateAppState, DollarAppState, HomeStatsAppState, NocturnoConfigAppState,
+    PresupuestoAppState, ProveedorAppState, StockAppState, SubCategoriaAppState, TipoVentaAppState,
+    VentaAppState,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -44,6 +45,7 @@ pub fn run() {
         .manage(CierreAppState::new())
         .manage(ClienteAppState::new())
         .manage(DollarAppState::new())
+        .manage(NocturnoConfigAppState::new())
         .invoke_handler(tauri::generate_handler![
             ensure_db_ready,
             get_home_stats,
@@ -111,6 +113,8 @@ pub fn run() {
             get_dollar_quotes,
             fetch_dollar_rates_manual,
             delete_dollar_quote,
+            get_nocturno_config,
+            save_nocturno_config,
             crear_presupuesto,
             get_all_presupuestos,
             get_presupuesto_by_id,

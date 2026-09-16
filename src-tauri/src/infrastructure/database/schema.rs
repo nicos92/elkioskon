@@ -22,6 +22,7 @@ pub(crate) const TABLES: &[&str] = &[
     "permissions",
     "tipos_venta",
     "dollar_quotes",
+    "nocturno_config",
 ];
 
 const SCHEMA_SQL: &str = "
@@ -135,6 +136,7 @@ const SCHEMA_SQL: &str = "
         id_tipo_venta INTEGER REFERENCES tipos_venta(id),
         cliente_id INTEGER NOT NULL REFERENCES clientes(id),
         created_at TEXT NOT NULL,
+        porcentaje_nocturno REAL NOT NULL DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
@@ -249,6 +251,14 @@ const SCHEMA_SQL: &str = "
     CREATE INDEX IF NOT EXISTS idx_cuo_estado ON cost_update_operations(estado);
     CREATE INDEX IF NOT EXISTS idx_cuo_created_at ON cost_update_operations(created_at);
     CREATE INDEX IF NOT EXISTS idx_cui_operation_id ON cost_update_items(operation_id);
+
+    CREATE TABLE IF NOT EXISTS nocturno_config (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        activo INTEGER NOT NULL DEFAULT 0,
+        porcentaje REAL NOT NULL DEFAULT 0,
+        hora_inicio TEXT NOT NULL DEFAULT '22:00',
+        hora_fin TEXT NOT NULL DEFAULT '06:00'
+    );
 ";
 
 pub(crate) fn apply_schema(conn: &Connection) -> Result<(), rusqlite::Error> {

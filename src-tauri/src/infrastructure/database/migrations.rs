@@ -54,6 +54,12 @@ pub(crate) fn run_column_migrations(conn: &Connection) -> Result<(), rusqlite::E
         "CREATE INDEX IF NOT EXISTS idx_ventas_cliente_id ON ventas(cliente_id)",
         [],
     )?;
+    ensure_column(
+        conn,
+        "ventas",
+        "porcentaje_nocturno",
+        "REAL NOT NULL DEFAULT 0",
+    )?;
 
     Ok(())
 }

@@ -5,6 +5,7 @@ pub mod cierre_repository;
 pub mod cliente_repository;
 pub mod cost_update_repository;
 pub mod dollar_quote_repository;
+pub mod nocturno_config_repository;
 pub mod pagination;
 pub mod presupuesto_repository;
 pub mod proveedor_repository;
@@ -23,6 +24,7 @@ pub use cost_update_repository::{
     CostUpdateApplyResult, CostUpdateRepository, CostUpdateUndoResult,
 };
 pub use dollar_quote_repository::DollarQuoteRepository;
+pub use nocturno_config_repository::NocturnoConfigRepository;
 pub use pagination::Page;
 pub use presupuesto_repository::{PresupuestoFilter, PresupuestoRepository};
 pub use proveedor_repository::ProveedorRepository;

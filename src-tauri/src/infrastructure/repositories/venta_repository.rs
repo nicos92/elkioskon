@@ -78,8 +78,10 @@ impl VentaRepository for SqliteVentaRepository {
 
         let now = chrono::Utc::now().to_rfc3339();
         total = (total * (1.0 - venta.descuento / 100.0) * 100.0).round() / 100.0;
+
+        let (porcentaje_nocturno, total) = Self::recargo_nocturno(&tx, total)?;
         tx.execute(
-            "INSERT INTO ventas (user_id, fecha, total, descuento, anulada, observacion, id_tipo_venta, cliente_id, created_at) VALUES (?1, ?2, ?3, ?4, 0, ?5, ?6, ?7, ?8)",
+            "INSERT INTO ventas (user_id, fecha, total, descuento, anulada, observacion, id_tipo_venta, cliente_id, created_at, porcentaje_nocturno) VALUES (?1, ?2, ?3, ?4, 0, ?5, ?6, ?7, ?8, ?9)",
             params![
                 venta.user_id,
                 now,
@@ -88,7 +90,8 @@ impl VentaRepository for SqliteVentaRepository {
                 &venta.observacion,
                 venta.id_tipo_venta,
                 venta.cliente_id,
-                now
+                now,
+                porcentaje_nocturno
             ],
         )?;
         let venta_id = tx.last_insert_rowid();
@@ -137,7 +140,7 @@ impl VentaRepository for SqliteVentaRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn.prepare(
-            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
+            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.porcentaje_nocturno, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
              FROM ventas v
              LEFT JOIN users u ON u.id = v.user_id
              LEFT JOIN tipos_venta t ON t.id = v.id_tipo_venta
@@ -163,7 +166,7 @@ impl VentaRepository for SqliteVentaRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn.prepare(
-            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
+            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.porcentaje_nocturno, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
              FROM ventas v
              LEFT JOIN users u ON u.id = v.user_id
              LEFT JOIN tipos_venta t ON t.id = v.id_tipo_venta
@@ -193,7 +196,7 @@ impl VentaRepository for SqliteVentaRepository {
         let total: i64 = conn.query_row("SELECT COUNT(*) FROM ventas", [], |row| row.get(0))?;
 
         let mut stmt = conn.prepare(
-            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
+            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.porcentaje_nocturno, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
              FROM ventas v
              LEFT JOIN users u ON u.id = v.user_id
              LEFT JOIN tipos_venta t ON t.id = v.id_tipo_venta
@@ -287,6 +290,55 @@ impl SqliteVentaRepository {
         Ok(count > 0)
     }
 
+    fn recargo_nocturno(
+        conn: &rusqlite::Connection,
+        total: f64,
+    ) -> Result<(f64, f64), AppError> {
+        use crate::domain::entities::{es_horario_nocturno, HoraConfig};
+        use chrono::Timelike;
+
+        let activo: i64 = conn.query_row(
+            "SELECT activo FROM nocturno_config WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )?;
+
+        if activo == 0 {
+            return Ok((0.0, total));
+        }
+
+        let (porcentaje, hora_inicio, hora_fin): (f64, String, String) = conn.query_row(
+            "SELECT porcentaje, hora_inicio, hora_fin FROM nocturno_config WHERE id = 1",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )?;
+
+        if porcentaje <= 0.0 {
+            return Ok((0.0, total));
+        }
+
+        let Some(inicio) = HoraConfig::from_hhmm(&hora_inicio) else {
+            return Ok((0.0, total));
+        };
+        let Some(fin) = HoraConfig::from_hhmm(&hora_fin) else {
+            return Ok((0.0, total));
+        };
+
+        let now_local = chrono::Local::now();
+        let ahora_minutos = now_local.hour() * 60 + now_local.minute();
+
+        if !es_horario_nocturno(
+            ahora_minutos,
+            inicio.minutos_desde_medianoche(),
+            fin.minutos_desde_medianoche(),
+        ) {
+            return Ok((0.0, total));
+        }
+
+        let recargado = (total * (1.0 + porcentaje / 100.0) * 100.0).round() / 100.0;
+        Ok((porcentaje, recargado))
+    }
+
     fn utc_to_local_date(utc_rfc3339: &str) -> Result<String, AppError> {
         let dt = chrono::DateTime::parse_from_rfc3339(utc_rfc3339)
             .map_err(|e| AppError::Internal(format!("Fecha inválida: {}", e)))?;
@@ -309,9 +361,10 @@ impl SqliteVentaRepository {
             observacion: row.get(7)?,
             tipo_venta: row.get(8)?,
             created_at: row.get(9)?,
-            cliente_id: row.get(10)?,
-            cliente_nombre: row.get(11)?,
-            cliente_apellido: row.get(12)?,
+            porcentaje_nocturno: row.get(10)?,
+            cliente_id: row.get(11)?,
+            cliente_nombre: row.get(12)?,
+            cliente_apellido: row.get(13)?,
             items: Vec::new(),
         })
     }
@@ -322,7 +375,7 @@ impl SqliteVentaRepository {
         id: i64,
     ) -> Result<Option<VentaWithDetalle>, AppError> {
         let mut stmt = conn.prepare(
-            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
+            "SELECT v.id, v.user_id, COALESCE(u.username, ''), v.fecha, v.total, v.descuento, v.anulada, v.observacion, COALESCE(t.nombre, 'Efectivo'), v.created_at, v.porcentaje_nocturno, v.cliente_id, COALESCE(c.nombre, ''), COALESCE(c.apellido, '')
              FROM ventas v
              LEFT JOIN users u ON u.id = v.user_id
              LEFT JOIN tipos_venta t ON t.id = v.id_tipo_venta
@@ -531,5 +584,94 @@ mod tests {
         let de_b = repo.find_by_cliente(cliente_b.id).unwrap();
         assert_eq!(de_b.len(), 1);
         assert_eq!(de_b[0].cliente_nombre.as_deref(), Some("Bruno"));
+    }
+
+    fn configurar_nocturno(activo: bool, porcentaje: f64, inicio: &str, fin: &str) {
+        let conn = DB.lock().unwrap();
+        conn.execute(
+            "UPDATE nocturno_config SET activo = ?1, porcentaje = ?2, hora_inicio = ?3, hora_fin = ?4 WHERE id = 1",
+            params![activo as i64, porcentaje, inicio, fin],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn create_aplica_recargo_nocturno_cuando_esta_activo_y_en_rango() {
+        let _guard = fresh_db();
+        configurar_nocturno(true, 10.0, "00:00", "23:59");
+        let cliente = create_cliente("Ana", "López");
+
+        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        venta.cliente_id = cliente.id;
+        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+
+        let created = SqliteVentaRepository::new()
+            .create(&venta, &[detalle], false)
+            .unwrap();
+
+        assert_eq!(created.porcentaje_nocturno, 10.0);
+        assert_eq!(created.total, 110.0);
+    }
+
+    #[test]
+    fn create_no_aplica_recargo_cuando_config_inactiva() {
+        let _guard = fresh_db();
+        configurar_nocturno(false, 10.0, "00:00", "23:59");
+        let cliente = create_cliente("Ana", "López");
+
+        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        venta.cliente_id = cliente.id;
+        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+
+        let created = SqliteVentaRepository::new()
+            .create(&venta, &[detalle], false)
+            .unwrap();
+
+        assert_eq!(created.porcentaje_nocturno, 0.0);
+        assert_eq!(created.total, 100.0);
+    }
+
+    #[test]
+    fn create_no_aplica_recargo_cuando_rango_inicio_fin_iguales() {
+        let _guard = fresh_db();
+        configurar_nocturno(true, 10.0, "10:00", "10:00");
+        let cliente = create_cliente("Ana", "López");
+
+        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        venta.cliente_id = cliente.id;
+        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+
+        let created = SqliteVentaRepository::new()
+            .create(&venta, &[detalle], false)
+            .unwrap();
+
+        assert_eq!(created.porcentaje_nocturno, 0.0);
+        assert_eq!(created.total, 100.0);
+    }
+
+    #[test]
+    fn create_aplica_recargo_sobre_total_ya_descontado() {
+        let _guard = fresh_db();
+        configurar_nocturno(true, 10.0, "00:00", "23:59");
+        let cliente = create_cliente("Ana", "López");
+
+        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 10.0, None);
+        venta.cliente_id = cliente.id;
+        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+
+        let created = SqliteVentaRepository::new()
+            .create(&venta, &[detalle], false)
+            .unwrap();
+
+        assert_eq!(created.porcentaje_nocturno, 10.0);
+        assert_eq!(created.total, 99.0);
+    }
+
+    fn id_articulo_primero() -> i64 {
+        let conn = DB.lock().unwrap();
+        conn.query_row("SELECT id_articulo FROM stock LIMIT 1", [], |row| {
+            row.get(0)
+        })
+        .unwrap()
     }
 }

@@ -148,6 +148,7 @@ mod tests {
             cliente_nombre: Some("Consumidor".to_string()),
             cliente_apellido: Some("Final".to_string()),
             created_at: "2026-01-01T00:00:00Z".to_string(),
+            porcentaje_nocturno: 0.0,
             items: vec![],
         }
     }

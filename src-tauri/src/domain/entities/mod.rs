@@ -8,6 +8,7 @@ pub mod cost_update_operation;
 pub mod dollar_quote;
 pub mod dollar_rate;
 pub mod home;
+pub mod nocturno_config;
 pub mod permission;
 pub mod permission_code;
 pub mod presupuesto;
@@ -29,6 +30,7 @@ pub use cost_update_operation::{CostUpdateEstado, CostUpdateOperation};
 pub use dollar_quote::DollarQuote;
 pub use dollar_rate::DollarRate;
 pub use home::{CategoriaConSub, HomeStats, StockBajoItem, SubCategoriaInfo};
+pub use nocturno_config::{es_horario_nocturno, HoraConfig, NocturnoConfig};
 pub use permission::{Permission, UserPermission};
 pub use permission_code::PermissionCode;
 pub use presupuesto::{

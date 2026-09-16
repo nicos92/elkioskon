@@ -12,6 +12,7 @@ pub struct Venta {
     pub id_tipo_venta: Option<i64>,
     pub cliente_id: i64,
     pub created_at: String,
+    pub porcentaje_nocturno: f64,
 }
 
 impl Venta {
@@ -27,6 +28,7 @@ impl Venta {
             id_tipo_venta: None,
             cliente_id: 0,
             created_at: String::new(),
+            porcentaje_nocturno: 0.0,
         }
     }
 }
@@ -84,5 +86,6 @@ pub struct VentaWithDetalle {
     pub cliente_nombre: Option<String>,
     pub cliente_apellido: Option<String>,
     pub created_at: String,
+    pub porcentaje_nocturno: f64,
     pub items: Vec<VentaDetalleConArticulo>,
 }

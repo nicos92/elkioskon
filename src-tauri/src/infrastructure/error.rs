@@ -165,6 +165,9 @@ pub enum AppError {
     #[error("Cotización del dólar not found")]
     DollarQuoteNotFound,
 
+    #[error("Configuración de recargo nocturno inválida")]
+    RecargoNocturnoInvalido,
+
     #[error("Internal error: {0}")]
     Internal(String),
 
@@ -262,6 +265,7 @@ impl AppError {
             AppError::DiaCerradoAnulacion => "dia_cerrado_anulacion",
             AppError::DollarFetchError(_) => "dollar_fetch_error",
             AppError::DollarQuoteNotFound => "dollar_quote_not_found",
+            AppError::RecargoNocturnoInvalido => "recargo_nocturno_invalido",
             AppError::Internal(_) => "internal_error",
             AppError::BulkUpdateInvalidPorcentaje => "bulk_update_invalid_porcentaje",
             AppError::BulkUpdateNoMatches => "bulk_update_no_matches",
@@ -385,6 +389,10 @@ impl AppError {
                     .to_string()
             }
             AppError::DollarQuoteNotFound => "La cotización del dólar no existe.".to_string(),
+            AppError::RecargoNocturnoInvalido => {
+                "La configuración del recargo nocturno es inválida. Verifique el porcentaje y los horarios."
+                    .to_string()
+            }
             AppError::Internal(_) => "Ocurrió un error inesperado. Intente nuevamente.".to_string(),
             AppError::BulkUpdateInvalidPorcentaje => {
                 "El porcentaje ingresado es inválido.".to_string()
@@ -455,6 +463,10 @@ mod tests {
             "dollar_quote_not_found"
         );
         assert_eq!(
+            AppError::RecargoNocturnoInvalido.code(),
+            "recargo_nocturno_invalido"
+        );
+        assert_eq!(
             AppError::PresupuestoEstadoInvalido.code(),
             "presupuesto_estado_invalido"
         );
@@ -492,6 +504,9 @@ mod tests {
             AppError::PresupuestoEstadoInvalido.user_message(),
             "El presupuesto no está en un estado que permita esa operación."
         );
+        assert!(AppError::RecargoNocturnoInvalido
+            .user_message()
+            .contains("recargo nocturno"));
         assert!(AppError::Database("boom".to_string())
             .user_message()
             .contains("base de datos"));
