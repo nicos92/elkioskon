@@ -29,7 +29,6 @@ impl HoraConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NocturnoConfig {
     pub activo: bool,
-    pub porcentaje: f64,
     pub hora_inicio: String,
     pub hora_fin: String,
 }
@@ -38,7 +37,6 @@ impl Default for NocturnoConfig {
     fn default() -> Self {
         Self {
             activo: false,
-            porcentaje: 0.0,
             hora_inicio: "22:00".to_string(),
             hora_fin: "06:00".to_string(),
         }

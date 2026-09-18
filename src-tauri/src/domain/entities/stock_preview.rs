@@ -11,6 +11,8 @@ pub struct StockPreview {
     pub proveedor: String,
     pub costo_actual: f64,
     pub ganancia: f64,
+    pub ganancia_diurna: f64,
+    pub ganancia_nocturna: f64,
     pub costo_nuevo: f64,
     pub cantidad: f64,
 }

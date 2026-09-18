@@ -17,6 +17,7 @@ pub mod stock;
 pub mod stock_preview;
 pub mod sub_categoria;
 pub mod tipo_venta;
+pub mod turno;
 pub mod user;
 pub mod venta;
 
@@ -42,5 +43,6 @@ pub use stock::Stock;
 pub use stock_preview::StockPreview;
 pub use sub_categoria::SubCategoria;
 pub use tipo_venta::TipoVenta;
+pub use turno::{es_nocturno_ahora, margen_efectivo};
 pub use user::User;
 pub use venta::{Venta, VentaDetalle, VentaDetalleConArticulo, VentaWithDetalle};

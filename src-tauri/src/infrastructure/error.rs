@@ -390,7 +390,7 @@ impl AppError {
             }
             AppError::DollarQuoteNotFound => "La cotización del dólar no existe.".to_string(),
             AppError::RecargoNocturnoInvalido => {
-                "La configuración del recargo nocturno es inválida. Verifique el porcentaje y los horarios."
+                "La configuración de turnos es inválida. Verifique los horarios."
                     .to_string()
             }
             AppError::Internal(_) => "Ocurrió un error inesperado. Intente nuevamente.".to_string(),
@@ -506,7 +506,7 @@ mod tests {
         );
         assert!(AppError::RecargoNocturnoInvalido
             .user_message()
-            .contains("recargo nocturno"));
+            .contains("turnos"));
         assert!(AppError::Database("boom".to_string())
             .user_message()
             .contains("base de datos"));

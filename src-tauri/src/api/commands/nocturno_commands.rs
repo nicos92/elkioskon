@@ -27,7 +27,6 @@ impl NocturnoConfigAppState {
 #[derive(serde::Deserialize)]
 pub struct SaveNocturnoConfigRequest {
     pub activo: bool,
-    pub porcentaje: f64,
     pub hora_inicio: String,
     pub hora_fin: String,
 }
@@ -59,15 +58,13 @@ pub fn save_nocturno_config(
 
     let config = NocturnoConfig {
         activo: request.activo,
-        porcentaje: request.porcentaje,
         hora_inicio: request.hora_inicio,
         hora_fin: request.hora_fin,
     };
     let antes = service.get()?;
     service.save(&config)?;
-    let detail = AuditDetail::new("recargo_nocturno", "Recargo nocturno")
+    let detail = AuditDetail::new("recargo_nocturno", "Precios por turno")
         .cambio("activo", antes.activo, config.activo)
-        .cambio("porcentaje", antes.porcentaje, config.porcentaje)
         .cambio("hora_inicio", antes.hora_inicio, config.hora_inicio)
         .cambio("hora_fin", antes.hora_fin, config.hora_fin)
         .to_json();

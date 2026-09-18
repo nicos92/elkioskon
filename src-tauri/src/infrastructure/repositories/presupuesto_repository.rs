@@ -1,8 +1,8 @@
 use rusqlite::params;
 
 use crate::domain::entities::{
-    Presupuesto, PresupuestoDetalle, PresupuestoDetalleConArticulo, PresupuestoEstado,
-    PresupuestoWithDetalle,
+    es_nocturno_ahora, margen_efectivo, NocturnoConfig, Presupuesto, PresupuestoDetalle,
+    PresupuestoDetalleConArticulo, PresupuestoEstado, PresupuestoWithDetalle,
 };
 use crate::domain::repositories::{Page, PresupuestoFilter, PresupuestoRepository};
 use crate::infrastructure::database::DB;
@@ -34,14 +34,23 @@ impl PresupuestoRepository for SqlitePresupuestoRepository {
         let mut items: Vec<PresupuestoDetalle> = Vec::new();
         let mut total = 0.0;
 
+        let (config_activo, es_nocturno) = turno_actual(&tx)?;
+
         for detalle in detalles {
             let stock = tx.query_row(
-                "SELECT costo, ganancia FROM stock WHERE id_articulo = ?1",
+                "SELECT costo, ganancia, ganancia_diurna, ganancia_nocturna FROM stock WHERE id_articulo = ?1",
                 params![detalle.id_articulo],
-                |row| Ok((row.get::<_, f64>(0)?, row.get::<_, f64>(1)?)),
+                |row| {
+                    Ok((
+                        row.get::<_, f64>(0)?,
+                        row.get::<_, f64>(1)?,
+                        row.get::<_, f64>(2)?,
+                        row.get::<_, f64>(3)?,
+                    ))
+                },
             );
 
-            let (costo, ganancia) = match stock {
+            let (costo, ganancia, ganancia_diurna, ganancia_nocturna) = match stock {
                 Ok(values) => values,
                 Err(rusqlite::Error::QueryReturnedNoRows) => {
                     return Err(AppError::ArticuloWithoutStock);
@@ -49,7 +58,17 @@ impl PresupuestoRepository for SqlitePresupuestoRepository {
                 Err(e) => return Err(e.into()),
             };
 
-            let precio_unitario = if detalle.precio_unitario > 0.0 {
+            let margen = margen_efectivo(
+                ganancia,
+                ganancia_diurna,
+                ganancia_nocturna,
+                config_activo,
+                es_nocturno,
+            );
+
+            let precio_unitario = if config_activo {
+                costo * (1.0 + margen / 100.0)
+            } else if detalle.precio_unitario > 0.0 {
                 detalle.precio_unitario
             } else {
                 costo * (1.0 + ganancia / 100.0)
@@ -384,6 +403,25 @@ impl SqlitePresupuestoRepository {
         }
 
         Ok(map)
+    }
+}
+
+fn turno_actual(conn: &rusqlite::Connection) -> Result<(bool, bool), AppError> {
+    let (activo, hora_inicio, hora_fin): (i64, String, String) = conn.query_row(
+        "SELECT activo, hora_inicio, hora_fin FROM nocturno_config WHERE id = 1",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )?;
+
+    let config = NocturnoConfig {
+        activo: activo != 0,
+        hora_inicio,
+        hora_fin,
+    };
+
+    match es_nocturno_ahora(&config) {
+        Some(es_nocturno) => Ok((config.activo, es_nocturno)),
+        None => Ok((false, false)),
     }
 }
 

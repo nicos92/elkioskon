@@ -26,12 +26,14 @@ impl StockRepository for SqliteStockRepository {
         let now = Utc::now().to_rfc3339();
 
         conn.execute(
-            "INSERT INTO stock (id_articulo, cantidad, costo, ganancia, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO stock (id_articulo, cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 stock.id_articulo,
                 stock.cantidad,
                 stock.costo,
                 stock.ganancia,
+                stock.ganancia_diurna,
+                stock.ganancia_nocturna,
                 now
             ],
         )?;
@@ -48,7 +50,7 @@ impl StockRepository for SqliteStockRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn.prepare(
-            "SELECT id, id_articulo, cantidad, costo, ganancia, updated_at FROM stock WHERE id = ?1",
+            "SELECT id, id_articulo, cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna, updated_at FROM stock WHERE id = ?1",
         )?;
 
         let mut rows = stmt.query(params![id])?;
@@ -64,7 +66,7 @@ impl StockRepository for SqliteStockRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn.prepare(
-            "SELECT id, id_articulo, cantidad, costo, ganancia, updated_at FROM stock WHERE id_articulo = ?1",
+            "SELECT id, id_articulo, cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna, updated_at FROM stock WHERE id_articulo = ?1",
         )?;
 
         let mut rows = stmt.query(params![id_articulo])?;
@@ -80,7 +82,7 @@ impl StockRepository for SqliteStockRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let mut stmt = conn.prepare(
-            "SELECT id, id_articulo, cantidad, costo, ganancia, updated_at FROM stock ORDER BY id",
+            "SELECT id, id_articulo, cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna, updated_at FROM stock ORDER BY id",
         )?;
 
         let mut stocks = Vec::new();
@@ -98,8 +100,16 @@ impl StockRepository for SqliteStockRepository {
         let now = Utc::now().to_rfc3339();
 
         conn.execute(
-            "UPDATE stock SET cantidad = ?1, costo = ?2, ganancia = ?3, updated_at = ?4 WHERE id = ?5",
-            params![stock.cantidad, stock.costo, stock.ganancia, now, stock.id],
+            "UPDATE stock SET cantidad = ?1, costo = ?2, ganancia = ?3, ganancia_diurna = ?4, ganancia_nocturna = ?5, updated_at = ?6 WHERE id = ?7",
+            params![
+                stock.cantidad,
+                stock.costo,
+                stock.ganancia,
+                stock.ganancia_diurna,
+                stock.ganancia_nocturna,
+                now,
+                stock.id
+            ],
         )?;
 
         Ok(Stock {
@@ -138,7 +148,7 @@ impl StockRepository for SqliteStockRepository {
         let mut stmt = conn.prepare(
             "SELECT s.id, s.id_articulo, a.cod_articulo, a.articulo,
                     c.categoria, sc.sub_categoria, p.proveedor,
-                    s.costo, s.ganancia,
+                    s.costo, s.ganancia, s.ganancia_diurna, s.ganancia_nocturna,
                     ROUND(s.costo * (1.0 + ?1 / 100.0), 2) AS costo_nuevo,
                     s.cantidad
              FROM stock s
@@ -171,8 +181,10 @@ impl StockRepository for SqliteStockRepository {
                 proveedor: row.get(6)?,
                 costo_actual: row.get(7)?,
                 ganancia: row.get(8)?,
-                costo_nuevo: row.get(9)?,
-                cantidad: row.get(10)?,
+                ganancia_diurna: row.get(9)?,
+                ganancia_nocturna: row.get(10)?,
+                costo_nuevo: row.get(11)?,
+                cantidad: row.get(12)?,
             });
         }
 
@@ -225,7 +237,9 @@ impl SqliteStockRepository {
             cantidad: row.get(2)?,
             costo: row.get(3)?,
             ganancia: row.get(4)?,
-            updated_at: row.get(5)?,
+            ganancia_diurna: row.get(5)?,
+            ganancia_nocturna: row.get(6)?,
+            updated_at: row.get(7)?,
         })
     }
 }
@@ -286,9 +300,10 @@ mod tests {
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
 
-        let created = repo
-            .create(&Stock::new(articulo.id, 10.5, 100.0, 25.0))
-            .unwrap();
+        let mut stock = Stock::new(articulo.id, 10.5, 100.0, 25.0);
+        stock.ganancia_diurna = 10.0;
+        stock.ganancia_nocturna = 40.0;
+        let created = repo.create(&stock).unwrap();
         assert!(created.id > 0);
 
         let found = repo.find_by_id(created.id).unwrap().unwrap();
@@ -296,6 +311,8 @@ mod tests {
         assert_eq!(found.cantidad, 10.5);
         assert_eq!(found.costo, 100.0);
         assert_eq!(found.ganancia, 25.0);
+        assert_eq!(found.ganancia_diurna, 10.0);
+        assert_eq!(found.ganancia_nocturna, 40.0);
     }
 
     #[test]
@@ -322,10 +339,14 @@ mod tests {
             .create(&Stock::new(articulo.id, 5.0, 50.0, 10.0))
             .unwrap();
         created.cantidad = 20.0;
+        created.ganancia_diurna = 15.0;
+        created.ganancia_nocturna = 35.0;
         repo.update(&created).unwrap();
 
         let updated = repo.find_by_id(created.id).unwrap().unwrap();
         assert_eq!(updated.cantidad, 20.0);
+        assert_eq!(updated.ganancia_diurna, 15.0);
+        assert_eq!(updated.ganancia_nocturna, 35.0);
     }
 
     #[test]

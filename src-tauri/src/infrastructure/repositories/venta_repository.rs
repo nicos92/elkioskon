@@ -1,6 +1,9 @@
 use rusqlite::params;
 
-use crate::domain::entities::{Venta, VentaDetalle, VentaDetalleConArticulo, VentaWithDetalle};
+use crate::domain::entities::{
+    es_nocturno_ahora, margen_efectivo, NocturnoConfig, Venta, VentaDetalle,
+    VentaDetalleConArticulo, VentaWithDetalle,
+};
 use crate::domain::repositories::{Page, VentaRepository};
 use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;
@@ -37,36 +40,56 @@ impl VentaRepository for SqliteVentaRepository {
         let mut items: Vec<VentaDetalle> = Vec::new();
         let mut total = 0.0;
 
+        let (config_activo, es_nocturno) = turno_actual(&tx)?;
+        let mut margen_registrado = 0.0;
+
         for detalle in detalles {
             let stock = tx.query_row(
-                "SELECT cantidad, costo, ganancia FROM stock WHERE id_articulo = ?1",
+                "SELECT cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna FROM stock WHERE id_articulo = ?1",
                 params![detalle.id_articulo],
                 |row| {
                     Ok((
                         row.get::<_, f64>(0)?,
                         row.get::<_, f64>(1)?,
                         row.get::<_, f64>(2)?,
+                        row.get::<_, f64>(3)?,
+                        row.get::<_, f64>(4)?,
                     ))
                 },
             );
 
-            let (stock_cantidad, costo, ganancia) = match stock {
-                Ok(values) => values,
-                Err(rusqlite::Error::QueryReturnedNoRows) => {
-                    return Err(AppError::ArticuloWithoutStock);
-                }
-                Err(e) => return Err(e.into()),
-            };
+            let (stock_cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna) =
+                match stock {
+                    Ok(values) => values,
+                    Err(rusqlite::Error::QueryReturnedNoRows) => {
+                        return Err(AppError::ArticuloWithoutStock);
+                    }
+                    Err(e) => return Err(e.into()),
+                };
 
             if !allow_negative_stock && detalle.cantidad > stock_cantidad {
                 return Err(AppError::InsufficientStock);
             }
 
-            let precio_unitario = if detalle.precio_unitario > 0.0 {
+            let margen = margen_efectivo(
+                ganancia,
+                ganancia_diurna,
+                ganancia_nocturna,
+                config_activo,
+                es_nocturno,
+            );
+
+            let precio_unitario = if config_activo {
+                costo * (1.0 + margen / 100.0)
+            } else if detalle.precio_unitario > 0.0 {
                 detalle.precio_unitario
             } else {
                 costo * (1.0 + ganancia / 100.0)
             };
+
+            if config_activo {
+                margen_registrado = margen;
+            }
 
             let mut item = detalle.clone();
             item.costo_unitario = costo;
@@ -79,7 +102,6 @@ impl VentaRepository for SqliteVentaRepository {
         let now = chrono::Utc::now().to_rfc3339();
         total = (total * (1.0 - venta.descuento / 100.0) * 100.0).round() / 100.0;
 
-        let (porcentaje_nocturno, total) = Self::recargo_nocturno(&tx, total)?;
         tx.execute(
             "INSERT INTO ventas (user_id, fecha, total, descuento, anulada, observacion, id_tipo_venta, cliente_id, created_at, porcentaje_nocturno) VALUES (?1, ?2, ?3, ?4, 0, ?5, ?6, ?7, ?8, ?9)",
             params![
@@ -91,7 +113,7 @@ impl VentaRepository for SqliteVentaRepository {
                 venta.id_tipo_venta,
                 venta.cliente_id,
                 now,
-                porcentaje_nocturno
+                margen_registrado
             ],
         )?;
         let venta_id = tx.last_insert_rowid();
@@ -290,55 +312,6 @@ impl SqliteVentaRepository {
         Ok(count > 0)
     }
 
-    fn recargo_nocturno(
-        conn: &rusqlite::Connection,
-        total: f64,
-    ) -> Result<(f64, f64), AppError> {
-        use crate::domain::entities::{es_horario_nocturno, HoraConfig};
-        use chrono::Timelike;
-
-        let activo: i64 = conn.query_row(
-            "SELECT activo FROM nocturno_config WHERE id = 1",
-            [],
-            |row| row.get(0),
-        )?;
-
-        if activo == 0 {
-            return Ok((0.0, total));
-        }
-
-        let (porcentaje, hora_inicio, hora_fin): (f64, String, String) = conn.query_row(
-            "SELECT porcentaje, hora_inicio, hora_fin FROM nocturno_config WHERE id = 1",
-            [],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )?;
-
-        if porcentaje <= 0.0 {
-            return Ok((0.0, total));
-        }
-
-        let Some(inicio) = HoraConfig::from_hhmm(&hora_inicio) else {
-            return Ok((0.0, total));
-        };
-        let Some(fin) = HoraConfig::from_hhmm(&hora_fin) else {
-            return Ok((0.0, total));
-        };
-
-        let now_local = chrono::Local::now();
-        let ahora_minutos = now_local.hour() * 60 + now_local.minute();
-
-        if !es_horario_nocturno(
-            ahora_minutos,
-            inicio.minutos_desde_medianoche(),
-            fin.minutos_desde_medianoche(),
-        ) {
-            return Ok((0.0, total));
-        }
-
-        let recargado = (total * (1.0 + porcentaje / 100.0) * 100.0).round() / 100.0;
-        Ok((porcentaje, recargado))
-    }
-
     fn utc_to_local_date(utc_rfc3339: &str) -> Result<String, AppError> {
         let dt = chrono::DateTime::parse_from_rfc3339(utc_rfc3339)
             .map_err(|e| AppError::Internal(format!("Fecha inválida: {}", e)))?;
@@ -472,6 +445,25 @@ impl SqliteVentaRepository {
     }
 }
 
+fn turno_actual(conn: &rusqlite::Connection) -> Result<(bool, bool), AppError> {
+    let (activo, hora_inicio, hora_fin): (i64, String, String) = conn.query_row(
+        "SELECT activo, hora_inicio, hora_fin FROM nocturno_config WHERE id = 1",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )?;
+
+    let config = NocturnoConfig {
+        activo: activo != 0,
+        hora_inicio,
+        hora_fin,
+    };
+
+    match es_nocturno_ahora(&config) {
+        Some(es_nocturno) => Ok((config.activo, es_nocturno)),
+        None => Ok((false, false)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -586,24 +578,55 @@ mod tests {
         assert_eq!(de_b[0].cliente_nombre.as_deref(), Some("Bruno"));
     }
 
-    fn configurar_nocturno(activo: bool, porcentaje: f64, inicio: &str, fin: &str) {
+    fn configurar_nocturno(activo: bool, inicio: &str, fin: &str) {
         let conn = DB.lock().unwrap();
         conn.execute(
-            "UPDATE nocturno_config SET activo = ?1, porcentaje = ?2, hora_inicio = ?3, hora_fin = ?4 WHERE id = 1",
-            params![activo as i64, porcentaje, inicio, fin],
+            "UPDATE nocturno_config SET activo = ?1, hora_inicio = ?2, hora_fin = ?3 WHERE id = 1",
+            params![activo as i64, inicio, fin],
         )
         .unwrap();
     }
 
+    fn preparar_stock(costo: f64, ganancia: f64, diurna: f64, nocturna: f64) -> i64 {
+        let id_articulo = id_articulo_primero();
+        let conn = DB.lock().unwrap();
+        conn.execute(
+            "UPDATE stock SET costo = ?1, ganancia = ?2, ganancia_diurna = ?3, ganancia_nocturna = ?4 WHERE id_articulo = ?5",
+            params![costo, ganancia, diurna, nocturna, id_articulo],
+        )
+        .unwrap();
+        id_articulo
+    }
+
     #[test]
-    fn create_aplica_recargo_nocturno_cuando_esta_activo_y_en_rango() {
+    fn create_aplica_margen_nocturno_cuando_activo_y_en_rango() {
         let _guard = fresh_db();
-        configurar_nocturno(true, 10.0, "00:00", "23:59");
+        configurar_nocturno(true, "00:00", "23:59");
+        let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
         let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
         venta.cliente_id = cliente.id;
-        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+        let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
+
+        let created = SqliteVentaRepository::new()
+            .create(&venta, &[detalle], false)
+            .unwrap();
+
+        assert_eq!(created.porcentaje_nocturno, 30.0);
+        assert_eq!(created.total, 130.0);
+    }
+
+    #[test]
+    fn create_aplica_margen_diurno_fuera_del_rango_nocturno() {
+        let _guard = fresh_db();
+        configurar_nocturno(true, "10:00", "10:00");
+        let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
+        let cliente = create_cliente("Ana", "López");
+
+        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        venta.cliente_id = cliente.id;
+        let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
         let created = SqliteVentaRepository::new()
             .create(&venta, &[detalle], false)
@@ -614,14 +637,15 @@ mod tests {
     }
 
     #[test]
-    fn create_no_aplica_recargo_cuando_config_inactiva() {
+    fn create_usa_precio_cliente_cuando_config_inactiva() {
         let _guard = fresh_db();
-        configurar_nocturno(false, 10.0, "00:00", "23:59");
+        configurar_nocturno(false, "00:00", "23:59");
+        let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
         let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
         venta.cliente_id = cliente.id;
-        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+        let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
         let created = SqliteVentaRepository::new()
             .create(&venta, &[detalle], false)
@@ -632,39 +656,40 @@ mod tests {
     }
 
     #[test]
-    fn create_no_aplica_recargo_cuando_rango_inicio_fin_iguales() {
+    fn create_aplica_diurno_cuando_rango_inicio_fin_iguales() {
         let _guard = fresh_db();
-        configurar_nocturno(true, 10.0, "10:00", "10:00");
+        configurar_nocturno(true, "10:00", "10:00");
+        let id_articulo = preparar_stock(100.0, 20.0, 10.0, 0.0);
         let cliente = create_cliente("Ana", "López");
 
         let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
         venta.cliente_id = cliente.id;
-        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+        let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
         let created = SqliteVentaRepository::new()
             .create(&venta, &[detalle], false)
             .unwrap();
 
-        assert_eq!(created.porcentaje_nocturno, 0.0);
-        assert_eq!(created.total, 100.0);
+        assert_eq!(created.total, 110.0);
     }
 
     #[test]
-    fn create_aplica_recargo_sobre_total_ya_descontado() {
+    fn create_aplica_margen_sobre_costo_con_descuento() {
         let _guard = fresh_db();
-        configurar_nocturno(true, 10.0, "00:00", "23:59");
+        configurar_nocturno(true, "00:00", "23:59");
+        let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
         let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 10.0, None);
         venta.cliente_id = cliente.id;
-        let detalle = VentaDetalle::new(id_articulo_primero(), 1.0, 0.0, 100.0);
+        let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
         let created = SqliteVentaRepository::new()
             .create(&venta, &[detalle], false)
             .unwrap();
 
-        assert_eq!(created.porcentaje_nocturno, 10.0);
-        assert_eq!(created.total, 99.0);
+        assert_eq!(created.porcentaje_nocturno, 30.0);
+        assert_eq!(created.total, 117.0);
     }
 
     fn id_articulo_primero() -> i64 {

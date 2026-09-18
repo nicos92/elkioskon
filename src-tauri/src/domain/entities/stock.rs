@@ -7,6 +7,8 @@ pub struct Stock {
     pub cantidad: f64,
     pub costo: f64,
     pub ganancia: f64,
+    pub ganancia_diurna: f64,
+    pub ganancia_nocturna: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<String>,
 }
@@ -19,6 +21,8 @@ impl Stock {
             cantidad,
             costo,
             ganancia,
+            ganancia_diurna: 0.0,
+            ganancia_nocturna: 0.0,
             updated_at: None,
         }
     }
@@ -36,6 +40,8 @@ mod tests {
         assert_eq!(s.cantidad, 50.5);
         assert_eq!(s.costo, 100.0);
         assert_eq!(s.ganancia, 30.0);
+        assert_eq!(s.ganancia_diurna, 0.0);
+        assert_eq!(s.ganancia_nocturna, 0.0);
         assert!(s.updated_at.is_none());
     }
 
@@ -45,6 +51,8 @@ mod tests {
         assert_eq!(s.cantidad, 0.0);
         assert_eq!(s.costo, 0.0);
         assert_eq!(s.ganancia, 0.0);
+        assert_eq!(s.ganancia_diurna, 0.0);
+        assert_eq!(s.ganancia_nocturna, 0.0);
         assert!(s.updated_at.is_none());
     }
 
@@ -56,6 +64,8 @@ mod tests {
             cantidad: 50.5,
             costo: 100.0,
             ganancia: 30.0,
+            ganancia_diurna: 10.0,
+            ganancia_nocturna: 40.0,
             updated_at: Some("2026-01-01T00:00:00Z".to_string()),
         };
         let json = serde_json::to_string(&s).unwrap();
@@ -64,6 +74,8 @@ mod tests {
         assert_eq!(back.cantidad, 50.5);
         assert_eq!(back.costo, 100.0);
         assert_eq!(back.ganancia, 30.0);
+        assert_eq!(back.ganancia_diurna, 10.0);
+        assert_eq!(back.ganancia_nocturna, 40.0);
         assert_eq!(back.id, 12);
         assert_eq!(back.updated_at.as_deref(), Some("2026-01-01T00:00:00Z"));
     }

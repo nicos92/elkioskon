@@ -35,10 +35,6 @@ impl NocturnoConfigService {
 }
 
 fn validate_config(config: &NocturnoConfig) -> Result<(), AppError> {
-    if !(0.0..=100.0).contains(&config.porcentaje) {
-        return Err(AppError::RecargoNocturnoInvalido);
-    }
-
     let inicio = HoraConfig::from_hhmm(&config.hora_inicio)
         .ok_or(AppError::RecargoNocturnoInvalido)?;
     let fin = HoraConfig::from_hhmm(&config.hora_fin).ok_or(AppError::RecargoNocturnoInvalido)?;
@@ -54,19 +50,6 @@ fn validate_config(config: &NocturnoConfig) -> Result<(), AppError> {
 mod tests {
     use super::*;
     use crate::domain::entities::nocturno_config::es_horario_nocturno;
-
-    #[test]
-    fn save_rejects_porcentaje_fuera_de_rango() {
-        let service = NocturnoConfigService::new();
-        let config = NocturnoConfig {
-            porcentaje: 150.0,
-            ..Default::default()
-        };
-        assert!(matches!(
-            service.save(&config),
-            Err(AppError::RecargoNocturnoInvalido)
-        ));
-    }
 
     #[test]
     fn save_rejects_formato_hora_invalido() {

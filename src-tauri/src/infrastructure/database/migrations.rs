@@ -60,6 +60,13 @@ pub(crate) fn run_column_migrations(conn: &Connection) -> Result<(), rusqlite::E
         "porcentaje_nocturno",
         "REAL NOT NULL DEFAULT 0",
     )?;
+    ensure_column(conn, "stock", "ganancia_diurna", "REAL NOT NULL DEFAULT 0")?;
+    ensure_column(
+        conn,
+        "stock",
+        "ganancia_nocturna",
+        "REAL NOT NULL DEFAULT 0",
+    )?;
 
     Ok(())
 }

@@ -101,6 +101,8 @@ const SCHEMA_SQL: &str = "
         cantidad REAL NOT NULL,
         costo REAL NOT NULL,
         ganancia REAL NOT NULL,
+        ganancia_diurna REAL NOT NULL DEFAULT 0,
+        ganancia_nocturna REAL NOT NULL DEFAULT 0,
         FOREIGN KEY (id_articulo) REFERENCES articulos(id)
     );
 

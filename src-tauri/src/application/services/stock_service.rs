@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
-use crate::domain::entities::{Stock, StockPreview};
-use crate::domain::repositories::StockRepository;
+use crate::domain::entities::{es_nocturno_ahora, margen_efectivo, Stock, StockPreview};
+use crate::domain::repositories::{NocturnoConfigRepository, StockRepository};
 use crate::infrastructure::error::AppError;
-use crate::infrastructure::repositories::SqliteStockRepository;
+use crate::infrastructure::repositories::{
+    SqliteNocturnoConfigRepository, SqliteStockRepository,
+};
 
 pub struct StockService {
     repository: Arc<dyn StockRepository>,
+    nocturno_repository: Arc<dyn NocturnoConfigRepository>,
 }
 
 impl Default for StockService {
@@ -17,11 +20,24 @@ impl Default for StockService {
 
 impl StockService {
     pub fn new() -> Self {
-        Self::with_repository(Arc::new(SqliteStockRepository::new()))
+        Self::with_repositories(
+            Arc::new(SqliteStockRepository::new()),
+            Arc::new(SqliteNocturnoConfigRepository::new()),
+        )
     }
 
     pub fn with_repository(repository: Arc<dyn StockRepository>) -> Self {
-        Self { repository }
+        Self::with_repositories(repository, Arc::new(SqliteNocturnoConfigRepository::new()))
+    }
+
+    pub fn with_repositories(
+        repository: Arc<dyn StockRepository>,
+        nocturno_repository: Arc<dyn NocturnoConfigRepository>,
+    ) -> Self {
+        Self {
+            repository,
+            nocturno_repository,
+        }
     }
 
     pub fn create(
@@ -30,13 +46,17 @@ impl StockService {
         cantidad: f64,
         costo: f64,
         ganancia: f64,
+        ganancia_diurna: f64,
+        ganancia_nocturna: f64,
     ) -> Result<Stock, AppError> {
         let existing = self.repository.find_by_articulo(id_articulo)?;
         if existing.is_some() {
             return Err(AppError::StockExistsForArticulo);
         }
 
-        let new_stock = Stock::new(id_articulo, cantidad, costo, ganancia);
+        let mut new_stock = Stock::new(id_articulo, cantidad, costo, ganancia);
+        new_stock.ganancia_diurna = ganancia_diurna;
+        new_stock.ganancia_nocturna = ganancia_nocturna;
         self.repository.create(&new_stock)
     }
 
@@ -60,6 +80,8 @@ impl StockService {
         cantidad: f64,
         costo: f64,
         ganancia: f64,
+        ganancia_diurna: f64,
+        ganancia_nocturna: f64,
     ) -> Result<Stock, AppError> {
         let mut existing = self
             .repository
@@ -69,6 +91,8 @@ impl StockService {
         existing.cantidad = cantidad;
         existing.costo = costo;
         existing.ganancia = ganancia;
+        existing.ganancia_diurna = ganancia_diurna;
+        existing.ganancia_nocturna = ganancia_nocturna;
 
         self.repository.update(&existing)
     }
@@ -89,8 +113,16 @@ impl StockService {
 
     pub fn get_precio_venta(&self, id: i64) -> Result<f64, AppError> {
         let stock = self.get_by_id(id)?;
-        let precio_venta = stock.costo * (1.0 + stock.ganancia / 100.0);
-        Ok(precio_venta)
+        let config = self.nocturno_repository.get_config()?;
+        let es_nocturno = es_nocturno_ahora(&config).unwrap_or(false);
+        let margen = margen_efectivo(
+            stock.ganancia,
+            stock.ganancia_diurna,
+            stock.ganancia_nocturna,
+            config.activo,
+            es_nocturno,
+        );
+        Ok(stock.costo * (1.0 + margen / 100.0))
     }
 
     pub fn get_preview(
@@ -211,7 +243,7 @@ mod tests {
         let _guard = fresh_db();
         let articulo = create_articulo();
         let service = StockService::new();
-        let stock = service.create(articulo.id, 10.0, 100.0, 25.0).unwrap();
+        let stock = service.create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0).unwrap();
 
         insert_venta_for_articulo(articulo.id);
 
@@ -225,7 +257,7 @@ mod tests {
         let _guard = fresh_db();
         let articulo = create_articulo();
         let service = StockService::new();
-        let stock = service.create(articulo.id, 10.0, 100.0, 25.0).unwrap();
+        let stock = service.create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0).unwrap();
 
         service.delete(stock.id).unwrap();
         assert!(matches!(
@@ -309,7 +341,7 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat Bulk", "Sub Bulk", "BULK1");
         let service = StockService::new();
-        let stock = service.create(art.id, 10.0, 1000.0, 25.0).unwrap();
+        let stock = service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -330,8 +362,8 @@ mod tests {
         let art1 = create_articulo_with_names("Cat All", "Sub All", "BALL1");
         let art2 = create_articulo_with_names("Cat All2", "Sub All2", "BALL2");
         let service = StockService::new();
-        let s1 = service.create(art1.id, 5.0, 500.0, 10.0).unwrap();
-        let s2 = service.create(art2.id, 3.0, 300.0, 20.0).unwrap();
+        let s1 = service.create(art1.id, 5.0, 500.0, 10.0, 0.0, 0.0).unwrap();
+        let s2 = service.create(art2.id, 3.0, 300.0, 20.0, 0.0, 0.0).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -378,7 +410,7 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat Prev", "Sub Prev", "PREV1");
         let service = StockService::new();
-        service.create(art.id, 10.0, 1000.0, 25.0).unwrap();
+        service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -396,8 +428,8 @@ mod tests {
         let art1 = create_articulo_with_names("Cat Filt", "Sub Filt", "FILT1");
         let art2 = create_articulo_with_names("Cat NoFilt", "Sub NoFilt", "FILT2");
         let service = StockService::new();
-        service.create(art1.id, 10.0, 1000.0, 20.0).unwrap();
-        service.create(art2.id, 5.0, 2000.0, 30.0).unwrap();
+        service.create(art1.id, 10.0, 1000.0, 20.0, 0.0, 0.0).unwrap();
+        service.create(art2.id, 5.0, 2000.0, 30.0, 0.0, 0.0).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -414,7 +446,7 @@ mod tests {
         let _guard = fresh_db();
         let art = create_articulo_with_names("Cat Neg", "Sub Neg", "NEG1");
         let service = StockService::new();
-        let stock = service.create(art.id, 10.0, 1000.0, 25.0).unwrap();
+        let stock = service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -427,5 +459,52 @@ mod tests {
 
         let updated = service.get_by_id(stock.id).unwrap();
         assert!((updated.costo - 500.0).abs() < 0.01);
+    }
+
+    fn crear_stock_con_turnos() -> Stock {
+        let art = create_articulo_with_names("Cat Turno", "Sub Turno", "TURNO1");
+        let service = StockService::new();
+        service
+            .create(art.id, 10.0, 100.0, 20.0, 10.0, 30.0)
+            .unwrap()
+    }
+
+    fn set_nocturno_config(activo: bool, inicio: &str, fin: &str) {
+        let conn = DB.lock().unwrap();
+        conn.execute(
+            "UPDATE nocturno_config SET activo = ?1, hora_inicio = ?2, hora_fin = ?3 WHERE id = 1",
+            rusqlite::params![activo as i64, inicio, fin],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn get_precio_venta_usa_ganancia_general_cuando_config_inactiva() {
+        let _guard = fresh_db();
+        set_nocturno_config(false, "00:00", "23:59");
+        let stock = crear_stock_con_turnos();
+        let service = StockService::new();
+        let precio = service.get_precio_venta(stock.id).unwrap();
+        assert!((precio - 120.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn get_precio_venta_usa_nocturna_cuando_activa_y_en_rango() {
+        let _guard = fresh_db();
+        set_nocturno_config(true, "00:00", "23:59");
+        let stock = crear_stock_con_turnos();
+        let service = StockService::new();
+        let precio = service.get_precio_venta(stock.id).unwrap();
+        assert!((precio - 130.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn get_precio_venta_usa_diurna_cuando_activa_fuera_de_rango() {
+        let _guard = fresh_db();
+        set_nocturno_config(true, "10:00", "10:00");
+        let stock = crear_stock_con_turnos();
+        let service = StockService::new();
+        let precio = service.get_precio_venta(stock.id).unwrap();
+        assert!((precio - 110.0).abs() < 0.001);
     }
 }

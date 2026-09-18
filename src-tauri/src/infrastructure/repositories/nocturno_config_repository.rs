@@ -24,15 +24,14 @@ impl NocturnoConfigRepository for SqliteNocturnoConfigRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         let config = conn.query_row(
-            "SELECT activo, porcentaje, hora_inicio, hora_fin
+            "SELECT activo, hora_inicio, hora_fin
              FROM nocturno_config WHERE id = 1",
             [],
             |row| {
                 Ok(NocturnoConfig {
                     activo: row.get::<_, i64>(0)? != 0,
-                    porcentaje: row.get(1)?,
-                    hora_inicio: row.get(2)?,
-                    hora_fin: row.get(3)?,
+                    hora_inicio: row.get(1)?,
+                    hora_fin: row.get(2)?,
                 })
             },
         )?;
@@ -44,19 +43,13 @@ impl NocturnoConfigRepository for SqliteNocturnoConfigRepository {
         let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
         conn.execute(
-            "INSERT INTO nocturno_config (id, activo, porcentaje, hora_inicio, hora_fin)
-             VALUES (1, ?1, ?2, ?3, ?4)
+            "INSERT INTO nocturno_config (id, activo, hora_inicio, hora_fin)
+             VALUES (1, ?1, ?2, ?3)
              ON CONFLICT(id) DO UPDATE SET
                  activo = excluded.activo,
-                 porcentaje = excluded.porcentaje,
                  hora_inicio = excluded.hora_inicio,
                  hora_fin = excluded.hora_fin",
-            params![
-                config.activo as i64,
-                config.porcentaje,
-                config.hora_inicio,
-                config.hora_fin
-            ],
+            params![config.activo as i64, config.hora_inicio, config.hora_fin],
         )?;
 
         Ok(())
@@ -82,7 +75,6 @@ mod tests {
 
         let config = repo.get_config().unwrap();
         assert!(!config.activo);
-        assert_eq!(config.porcentaje, 0.0);
         assert_eq!(config.hora_inicio, "22:00");
         assert_eq!(config.hora_fin, "06:00");
     }
@@ -94,7 +86,6 @@ mod tests {
 
         let config = NocturnoConfig {
             activo: true,
-            porcentaje: 12.5,
             hora_inicio: "23:00".to_string(),
             hora_fin: "07:00".to_string(),
         };
@@ -102,7 +93,6 @@ mod tests {
 
         let loaded = repo.get_config().unwrap();
         assert!(loaded.activo);
-        assert_eq!(loaded.porcentaje, 12.5);
         assert_eq!(loaded.hora_inicio, "23:00");
         assert_eq!(loaded.hora_fin, "07:00");
 

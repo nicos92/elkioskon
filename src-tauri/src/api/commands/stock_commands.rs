@@ -33,6 +33,8 @@ pub struct CreateStockRequest {
     pub cantidad: f64,
     pub costo: f64,
     pub ganancia: f64,
+    pub ganancia_diurna: f64,
+    pub ganancia_nocturna: f64,
 }
 
 #[derive(serde::Deserialize)]
@@ -41,6 +43,8 @@ pub struct UpdateStockRequest {
     pub cantidad: f64,
     pub costo: f64,
     pub ganancia: f64,
+    pub ganancia_diurna: f64,
+    pub ganancia_nocturna: f64,
 }
 
 #[tauri::command(async)]
@@ -97,6 +101,8 @@ pub fn create_stock(
         request.cantidad,
         request.costo,
         request.ganancia,
+        request.ganancia_diurna,
+        request.ganancia_nocturna,
     )?;
     let label = articulo_label(result.id_articulo)?;
     log_audit(
@@ -104,8 +110,8 @@ pub fn create_stock(
         AuditScreen::Stock,
         AuditAction::Create,
         Some(format!(
-            "Stock creado: {}, cantidad={}, costo={}, ganancia={}",
-            label, result.cantidad, result.costo, result.ganancia
+            "Stock creado: {}, cantidad={}, costo={}, ganancia={}, ganancia_diurna={}, ganancia_nocturna={}",
+            label, result.cantidad, result.costo, result.ganancia, result.ganancia_diurna, result.ganancia_nocturna
         )),
     )?;
     Ok(result)
@@ -128,12 +134,20 @@ pub fn update_stock(
         request.cantidad,
         request.costo,
         request.ganancia,
+        request.ganancia_diurna,
+        request.ganancia_nocturna,
     )?;
     let label = articulo_label(result.id_articulo)?;
     let detail = AuditDetail::new("stock", label)
         .cambio("cantidad", antes.cantidad, result.cantidad)
         .cambio("costo", antes.costo, result.costo)
         .cambio("ganancia", antes.ganancia, result.ganancia)
+        .cambio("ganancia_diurna", antes.ganancia_diurna, result.ganancia_diurna)
+        .cambio(
+            "ganancia_nocturna",
+            antes.ganancia_nocturna,
+            result.ganancia_nocturna,
+        )
         .to_json();
     log_audit(user_id, AuditScreen::Stock, AuditAction::Update, Some(detail))?;
     Ok(result)
