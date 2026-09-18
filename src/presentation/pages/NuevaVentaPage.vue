@@ -23,6 +23,7 @@ import type {
 import {
   calcularPrecioVenta,
   esHorarioNocturno,
+  margenEfectivo,
   minutosDesdeMedianoche,
 } from "../../domain/entities";
 import ArticuloSearch from "../components/venta/ArticuloSearch.vue";
@@ -46,7 +47,7 @@ const {
   canViewClientes,
   canCreateCliente,
 } = usePermissions();
-const { error: toastError, success: toastSuccess } = useToasts();
+const { error: toastError, success: toastSuccess, warning: toastWarning } = useToasts();
 
 const articuloSearchRef = ref<InstanceType<typeof ArticuloSearch> | null>(null);
 
@@ -86,21 +87,6 @@ watch(
     { immediate: true },
 );
 
-const articulosVendibles = computed<CartSourceItem[]>(() => {
-  return stockStore.stocks.map((s) => {
-    const articulo = articulosStore.articulos.find(
-      (a) => a.id === s.id_articulo,
-    );
-    return {
-      id_articulo: s.id_articulo,
-      cod_articulo: articulo?.cod_articulo || "-",
-      articulo: articulo?.articulo || "Sin artículo",
-      stockDisponible: s.cantidad,
-      precioVenta: calcularPrecioVenta(s.costo, s.ganancia),
-    };
-  });
-});
-
 function horaActualEnMinutos(): number {
     const d = new Date();
     return d.getHours() * 60 + d.getMinutes();
@@ -109,22 +95,42 @@ function horaActualEnMinutos(): number {
 const minutosActuales = ref(horaActualEnMinutos());
 let relojTimer: number | undefined;
 
-const porcentajeNocturnoActual = computed(() => {
+const esNocturnoActual = computed(() => {
     const cfg = nocturnoStore.config;
-    if (!cfg.activo || cfg.porcentaje <= 0) return 0;
+    if (!cfg.activo) return false;
     const inicio = minutosDesdeMedianoche(cfg.hora_inicio);
     const fin = minutosDesdeMedianoche(cfg.hora_fin);
-    if (inicio === null || fin === null) return 0;
-    return esHorarioNocturno(minutosActuales.value, inicio, fin)
-        ? cfg.porcentaje
-        : 0;
+    if (inicio === null || fin === null) return false;
+    return esHorarioNocturno(minutosActuales.value, inicio, fin);
+});
+
+const articulosVendibles = computed<CartSourceItem[]>(() => {
+  const cfg = nocturnoStore.config;
+  return stockStore.stocks.map((s) => {
+    const articulo = articulosStore.articulos.find(
+      (a) => a.id === s.id_articulo,
+    );
+    const margen = margenEfectivo(
+      s.ganancia,
+      s.ganancia_diurna,
+      s.ganancia_nocturna,
+      cfg.activo,
+      esNocturnoActual.value,
+    );
+    return {
+      id_articulo: s.id_articulo,
+      cod_articulo: articulo?.cod_articulo || "-",
+      articulo: articulo?.articulo || "Sin artículo",
+      stockDisponible: s.cantidad,
+      precioVenta: calcularPrecioVenta(s.costo, margen),
+    };
+  });
 });
 
 const cartLogic = useCart({
   getVendibles: () => articulosVendibles.value,
   canVenderSinStock,
   getTipoVentaId: () => tipoVentaId.value,
-  getRecargoNocturno: () => porcentajeNocturnoActual.value,
   focusInput: () => articuloSearchRef.value?.focus(),
 });
 
@@ -136,9 +142,6 @@ const {
   carritoSubtotal,
   descuentoMonto,
   carritoTotal,
-  recargoNocturnoPorcentaje,
-  recargoNocturnoMonto,
-  carritoTotalConRecargo,
   carritoValido,
   presupuestoValido,
   focusSearch,
@@ -151,6 +154,39 @@ const {
   setItems,
   resetCart,
 } = cartLogic;
+
+watch(esNocturnoActual, (esNocturno, antes) => {
+  if (esNocturno && !antes) {
+    toastWarning("Precios nocturnos activos.");
+  }
+});
+
+watch(
+  () => [
+    nocturnoStore.config.activo,
+    nocturnoStore.config.hora_inicio,
+    nocturnoStore.config.hora_fin,
+    minutosActuales.value,
+  ],
+  () => {
+    const cfg = nocturnoStore.config;
+    for (const item of cart.value) {
+      const s = stockStore.stocks.find(
+        (stock) => stock.id_articulo === item.id_articulo,
+      );
+      if (!s) continue;
+      const margen = margenEfectivo(
+        s.ganancia,
+        s.ganancia_diurna,
+        s.ganancia_nocturna,
+        cfg.activo,
+        esNocturnoActual.value,
+      );
+      item.precio = calcularPrecioVenta(s.costo, margen);
+      item.subtotal = item.cantidad * item.precio;
+    }
+  },
+);
 
 const fechaHoy = computed(() => new Date().toLocaleDateString());
 
@@ -165,7 +201,9 @@ onMounted(async () => {
   minutosActuales.value = horaActualEnMinutos();
   relojTimer = window.setInterval(() => {
     minutosActuales.value = horaActualEnMinutos();
-  }, 60000);
+  }, 30000);
+  window.addEventListener("focus", refrescarTurno);
+  document.addEventListener("visibilitychange", refrescarTurno);
   await ventasStore.checkDiaCerrado();
   if (canViewClientes()) {
     const clienteDef = await clientesStore.getClienteDefecto();
@@ -179,10 +217,18 @@ onMounted(async () => {
   focusSearch();
 });
 
+function refrescarTurno() {
+  if (!document.hidden) {
+    minutosActuales.value = horaActualEnMinutos();
+  }
+}
+
 onUnmounted(() => {
   if (relojTimer !== undefined) {
     window.clearInterval(relojTimer);
   }
+  window.removeEventListener("focus", refrescarTurno);
+  document.removeEventListener("visibilitychange", refrescarTurno);
 });
 
 function quitarPresupuesto() {
@@ -401,6 +447,21 @@ function generarPdf() {
             </button>
         </div>
 
+        <div
+            v-if="nocturnoStore.config.activo"
+            class="turno-banner"
+            :class="esNocturnoActual ? 'turno-nocturno' : 'turno-diurno'"
+        >
+            <span v-if="esNocturnoActual">
+                Precios nocturnos activos: se aplica la ganancia nocturna de
+                cada artículo.
+            </span>
+            <span v-else>
+                Precios diurnos activos: se aplica la ganancia diurna de cada
+                artículo.
+            </span>
+        </div>
+
         <div class="venta-section header-section">
             <div class="form-group obs-group">
                 <label>Observación</label>
@@ -486,9 +547,7 @@ function generarPdf() {
                 :subtotal="carritoSubtotal"
                 :descuento="descuento"
                 :descuento-monto="descuentoMonto"
-                :total="carritoTotalConRecargo"
-                :porcentaje-nocturno="recargoNocturnoPorcentaje"
-                :recargo-nocturno-monto="recargoNocturnoMonto"
+                :total="carritoTotal"
                 @update:descuento="descuento = $event"
             />
         </div>
@@ -596,6 +655,28 @@ function generarPdf() {
 .presupuesto-banner .btn-secondary {
     padding: 0.35rem 0.75rem;
     font-size: 0.85rem;
+}
+
+.turno-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.turno-diurno {
+    color: var(--color-text-muted);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+}
+
+.turno-nocturno {
+    color: #fff;
+    background: var(--color-warning);
 }
 
 .venta-section {

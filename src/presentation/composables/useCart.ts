@@ -22,7 +22,6 @@ export interface UseCartOptions {
   getVendibles: () => CartSourceItem[];
   canVenderSinStock: () => boolean;
   getTipoVentaId: () => number | null;
-  getRecargoNocturno?: () => number;
   focusInput?: () => void;
 }
 
@@ -30,7 +29,6 @@ export function useCart({
   getVendibles,
   canVenderSinStock,
   getTipoVentaId,
-  getRecargoNocturno,
   focusInput,
 }: UseCartOptions) {
   const cart = ref<CartItem[]>([]);
@@ -61,16 +59,6 @@ export function useCart({
   });
 
   const carritoTotal = computed(() => carritoSubtotal.value - descuentoMonto.value);
-
-  const recargoNocturnoPorcentaje = computed(() => getRecargoNocturno?.() ?? 0);
-
-  const recargoNocturnoMonto = computed(
-    () => (carritoTotal.value * recargoNocturnoPorcentaje.value) / 100,
-  );
-
-  const carritoTotalConRecargo = computed(
-    () => carritoTotal.value + recargoNocturnoMonto.value,
-  );
 
   const descuentoValido = computed(
     () =>
@@ -172,9 +160,6 @@ export function useCart({
     carritoSubtotal,
     descuentoMonto,
     carritoTotal,
-    recargoNocturnoPorcentaje,
-    recargoNocturnoMonto,
-    carritoTotalConRecargo,
     descuentoValido,
     carritoValido,
     presupuestoValido,

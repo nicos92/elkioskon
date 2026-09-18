@@ -28,7 +28,6 @@ onMounted(async () => {
     if (canConfigurarRecargoNocturno()) {
         await nocturnoStore.fetchConfig();
         nocturnoActivo.value = nocturnoStore.config.activo;
-        nocturnoPorcentaje.value = nocturnoStore.config.porcentaje;
         nocturnoInicio.value = nocturnoStore.config.hora_inicio;
         nocturnoFin.value = nocturnoStore.config.hora_fin;
     }
@@ -36,11 +35,6 @@ onMounted(async () => {
 
 async function handleSaveNocturno() {
     nocturnoError.value = null;
-    const porcentaje = Number(nocturnoPorcentaje.value);
-    if (!Number.isFinite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
-        nocturnoError.value = "El porcentaje debe estar entre 0 y 100.";
-        return;
-    }
     if (nocturnoInicio.value === nocturnoFin.value) {
         nocturnoError.value = "Las horas de inicio y fin no pueden ser iguales.";
         return;
@@ -49,16 +43,15 @@ async function handleSaveNocturno() {
     nocturnoSaving.value = true;
     const ok = await nocturnoStore.saveConfig({
         activo: nocturnoActivo.value,
-        porcentaje,
         hora_inicio: nocturnoInicio.value,
         hora_fin: nocturnoFin.value,
     });
     nocturnoSaving.value = false;
 
     if (ok) {
-        toastSuccess("Recargo nocturno guardado correctamente.");
+        toastSuccess("Precios por turno guardados correctamente.");
     } else {
-        toastError(nocturnoStore.error || "No se pudo guardar el recargo nocturno.");
+        toastError(nocturnoStore.error || "No se pudo guardar la configuración de turnos.");
     }
 }
 
@@ -70,7 +63,6 @@ const isSaving = ref(false);
 const formError = ref<string | null>(null);
 
 const nocturnoActivo = ref(false);
-const nocturnoPorcentaje = ref(0);
 const nocturnoInicio = ref("22:00");
 const nocturnoFin = ref("06:00");
 const nocturnoSaving = ref(false);
@@ -170,7 +162,7 @@ function handleLogout() {
         </div>
 
         <div v-if="canConfigurarRecargoNocturno()" class="settings-section">
-            <h3>Recargo nocturno</h3>
+            <h3>Precios por turno</h3>
             <div class="setting-item">
                 <label class="setting-label">
                     <input
@@ -178,20 +170,15 @@ function handleLogout() {
                         type="checkbox"
                         class="nocturno-checkbox"
                     />
-                    Activar recargo en horario nocturno
+                    Activar precios diferenciados por horario nocturno
                 </label>
             </div>
+            <p class="setting-hint">
+                La ganancia aplicada se toma de la configuración de cada
+                artículo (ganancia diurna / nocturna). Si el porcentaje del
+                turno es 0, se usa la ganancia general.
+            </p>
             <div class="nocturno-grid">
-                <div class="form-group">
-                    <label>Porcentaje de recargo (%)</label>
-                    <input
-                        v-model.number="nocturnoPorcentaje"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="100"
-                    />
-                </div>
                 <div class="form-group">
                     <label>Hora de inicio</label>
                     <input v-model="nocturnoInicio" type="time" />
@@ -315,6 +302,12 @@ h1 {
 
 .setting-value {
     font-weight: 500;
+}
+
+.setting-hint {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
 }
 
 .setting-select {

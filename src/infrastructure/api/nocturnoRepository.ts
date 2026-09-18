@@ -16,7 +16,6 @@ export class NocturnoConfigApiRepository implements INocturnoConfigRepository {
       userId: getCurrentUserId(),
       request: {
         activo: config.activo,
-        porcentaje: config.porcentaje,
         hora_inicio: config.hora_inicio,
         hora_fin: config.hora_fin,
       },

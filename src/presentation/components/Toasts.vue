@@ -46,6 +46,10 @@ const { toasts } = useToasts();
   color: var(--color-on-success);
 }
 
+.toast.warning {
+  background: var(--color-warning);
+}
+
 .toast-enter-active,
 .toast-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;

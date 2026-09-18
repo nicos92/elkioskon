@@ -182,6 +182,8 @@ export interface Stock {
   cantidad: number;
   costo: number;
   ganancia: number;
+  ganancia_diurna: number;
+  ganancia_nocturna: number;
   updated_at?: string;
 }
 
@@ -190,6 +192,8 @@ export interface CreateStockRequest {
   cantidad: number;
   costo: number;
   ganancia: number;
+  ganancia_diurna: number;
+  ganancia_nocturna: number;
 }
 
 export interface UpdateStockRequest {
@@ -197,6 +201,8 @@ export interface UpdateStockRequest {
   cantidad: number;
   costo: number;
   ganancia: number;
+  ganancia_diurna: number;
+  ganancia_nocturna: number;
 }
 
 export interface AuditLog {
@@ -418,7 +424,6 @@ export interface DollarQuote {
 
 export interface NocturnoConfig {
   activo: boolean;
-  porcentaje: number;
   hora_inicio: string;
   hora_fin: string;
 }
@@ -467,6 +472,8 @@ export interface StockPreview {
   proveedor: string;
   costo_actual: number;
   ganancia: number;
+  ganancia_diurna: number;
+  ganancia_nocturna: number;
   costo_nuevo: number;
   cantidad: number;
 }

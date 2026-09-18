@@ -9,7 +9,6 @@ export const useNocturnoStore = defineStore("nocturno", () => {
   const nocturnoUseCase = new NocturnoUseCase(nocturnoConfigRepository);
   const config = ref<NocturnoConfig>({
     activo: false,
-    porcentaje: 0,
     hora_inicio: "22:00",
     hora_fin: "06:00",
   });

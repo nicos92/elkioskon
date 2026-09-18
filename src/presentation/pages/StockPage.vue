@@ -30,6 +30,8 @@ const formArticuloNombre = ref("");
 const formCantidad = ref(0);
 const formCosto = ref(0);
 const formGanancia = ref(0);
+const formGananciaDiurna = ref(0);
+const formGananciaNocturna = ref(0);
 
 const preciosVenta = ref<Map<number, number>>(new Map());
 
@@ -99,6 +101,8 @@ function openCreateModal() {
     formCantidad.value = 0;
     formCosto.value = 0;
     formGanancia.value = 0;
+    formGananciaDiurna.value = 0;
+    formGananciaNocturna.value = 0;
     showModal.value = true;
 }
 
@@ -110,6 +114,8 @@ function openEditModal(stock: (typeof stockCompletos.value)[0]) {
     formCantidad.value = stock.cantidad;
     formCosto.value = stock.costo;
     formGanancia.value = stock.ganancia;
+    formGananciaDiurna.value = stock.ganancia_diurna;
+    formGananciaNocturna.value = stock.ganancia_nocturna;
     showModal.value = true;
 }
 
@@ -120,6 +126,8 @@ async function handleCreate() {
         cantidad: formCantidad.value,
         costo: formCosto.value,
         ganancia: formGanancia.value,
+        ganancia_diurna: formGananciaDiurna.value,
+        ganancia_nocturna: formGananciaNocturna.value,
     };
     const success = await stockStore.createStock(request);
     if (success) {
@@ -135,6 +143,8 @@ async function handleUpdate() {
         cantidad: formCantidad.value,
         costo: formCosto.value,
         ganancia: formGanancia.value,
+        ganancia_diurna: formGananciaDiurna.value,
+        ganancia_nocturna: formGananciaNocturna.value,
     };
     const success = await stockStore.updateStock(request);
     if (success) {
@@ -185,7 +195,7 @@ async function handleDelete(id: number) {
         </div>
 
         <DataTable
-            :columns="['Código', 'Artículo', 'Cantidad', 'Costo', 'Ganancia %', 'Precio Venta', 'Acciones']"
+            :columns="['Código', 'Artículo', 'Cantidad', 'Costo', 'Ganancia %', 'Ganancia Diurna %', 'Ganancia Nocturna %', 'Precio Venta', 'Acciones']"
             :loading="loading"
             :count="filteredStock.length"
             empty="No hay stock que coincida con la búsqueda"
@@ -196,6 +206,8 @@ async function handleDelete(id: number) {
                 <td>{{ stock.cantidad }}</td>
                 <td>${{ stock.costo.toFixed(2) }}</td>
                 <td>{{ stock.ganancia }}%</td>
+                <td>{{ stock.ganancia_diurna }}%</td>
+                <td>{{ stock.ganancia_nocturna }}%</td>
                 <td>${{ stock.precioVenta.toFixed(2) }}</td>
                 <td class="actions">
                     <button
@@ -274,6 +286,24 @@ async function handleDelete(id: number) {
                     step="0.01"
                     min="0"
                     required
+                />
+            </div>
+            <div class="form-group">
+                <label>Ganancia diurna (%)</label>
+                <input
+                    v-model.number="formGananciaDiurna"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                />
+            </div>
+            <div class="form-group">
+                <label>Ganancia nocturna (%)</label>
+                <input
+                    v-model.number="formGananciaNocturna"
+                    type="number"
+                    step="0.01"
+                    min="0"
                 />
             </div>
             <template #extra>

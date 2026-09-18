@@ -21,6 +21,18 @@ export function calcularPrecioVenta(costo: number, ganancia: number): number {
   return costo * (1 + ganancia / 100);
 }
 
+export function margenEfectivo(
+  ganancia: number,
+  gananciaDiurna: number,
+  gananciaNocturna: number,
+  activo: boolean,
+  esNocturno: boolean,
+): number {
+  if (!activo) return ganancia;
+  if (esNocturno) return gananciaNocturna > 0 ? gananciaNocturna : ganancia;
+  return gananciaDiurna > 0 ? gananciaDiurna : ganancia;
+}
+
 export function minutosDesdeMedianoche(hhmm: string): number | null {
   const match = /^(\d{2}):(\d{2})$/.exec(hhmm.trim());
   if (!match) return null;
