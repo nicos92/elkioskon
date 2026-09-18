@@ -149,7 +149,7 @@ function onBlur() {
     border: 2px solid var(--color-primary);
     border-radius: 6px;
     margin-top: 0rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(var(--color-shadow-rgb), 0.15);
 }
 
 .cliente-option {

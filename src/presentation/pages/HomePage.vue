@@ -373,7 +373,7 @@ p {
     background: var(--color-surface);
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -434,7 +434,7 @@ p {
     background: var(--color-surface);
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
 }
 
 .card.full-width {
@@ -489,8 +489,8 @@ p {
 }
 
 .subcategory-tag {
-    background: var(--color-surface-2);
-    color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;

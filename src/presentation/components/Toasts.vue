@@ -32,7 +32,7 @@ const { toasts } = useToasts();
 .toast {
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.15);
   font-size: 0.9rem;
   color: #fff;
 }

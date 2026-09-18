@@ -134,7 +134,7 @@ function onSubmit() {
     max-width: 420px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(var(--color-shadow-rgb), 0.3);
 }
 
 .modal-header {

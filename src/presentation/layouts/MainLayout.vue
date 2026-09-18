@@ -192,7 +192,7 @@ function isActive(name: string): boolean {
 .toggle-btn {
     background: none;
     border: none;
-    color: var(--color-text-muted);
+    color: var(--color-sidebar-text-muted);
     cursor: pointer;
     font-size: 1rem;
     padding: 0.25rem;
@@ -222,7 +222,7 @@ function isActive(name: string): boolean {
     display: flex;
     align-items: center;
     padding: 0.75rem 1rem;
-    color: var(--color-text-muted);
+    color: var(--color-sidebar-text-muted);
     text-decoration: none;
     transition: all 0.2s;
 }
@@ -254,7 +254,7 @@ function isActive(name: string): boolean {
 
 .footer-hint {
     font-size: 0.8rem;
-    color: var(--color-text-muted);
+    color: var(--color-sidebar-text-muted);
 }
 
 .main-content {

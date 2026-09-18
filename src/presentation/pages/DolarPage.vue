@@ -248,7 +248,7 @@ onMounted(async () => {
 .rate-card {
     background: var(--color-surface);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
     padding: 1.5rem;
 }
 
@@ -305,7 +305,7 @@ onMounted(async () => {
 .table-wrapper {
     overflow-x: auto;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
 }
 
 .data-table {

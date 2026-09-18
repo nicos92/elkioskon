@@ -292,7 +292,7 @@ h1 {
     background: var(--color-surface);
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
     margin-bottom: 1.5rem;
 }
 

@@ -603,7 +603,7 @@ function generarPdf() {
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(var(--color-shadow-rgb), 0.1);
 }
 
 .header-section {

@@ -138,7 +138,7 @@ async function handleLogin() {
     background: color-mix(in srgb, var(--color-surface) 75%, transparent);
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(var(--color-shadow-rgb), 0.2);
     width: 100%;
     max-width: 400px;
     backdrop-filter: blur(4px);
