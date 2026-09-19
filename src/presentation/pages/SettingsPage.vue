@@ -23,7 +23,7 @@ onMounted(async () => {
     try {
         appVersion.value = await getVersion();
     } catch {
-        appVersion.value = "0.3.0";
+        appVersion.value = "0.4.0";
     }
     if (canConfigurarRecargoNocturno()) {
         await nocturnoStore.fetchConfig();
