@@ -50,7 +50,7 @@ src/
     ├── layouts/       # MainLayout con sidebar
     ├── pages/         # Login, Home, Users, Proveedores, Categorias, SubCategorias, Articulos, Stock, Permissions, Settings, Ventas, NuevaVenta, Presupuestos, Clientes, Cierres, Dolar, Auditoria
     ├── stores/        # Pinia stores (auth, users, permissions, proveedores, categorias, subCategorias, articulos, stock, theme, clientes, ventas, presupuestos, dolar, cierres, auditoria, home, tiposVenta). Delegan en casos de uso; reciben el repo por constructor (di.ts)
-    ├── composables/   # usePermissions, usePagination, useCart, useConfirm, useToasts
+    ├── composables/   # usePermissions, usePagination, useCart, useConfirm, useToasts; venta/ (usePreciosVenta, useClienteSeleccion, usePresupuestoOrigen)
     ├── components/    # ui/ (Modal, DataTable, PaginationBar, ConfirmButton, PageHeader, SearchBar, EntityFormModal), venta/ (ArticuloSearch, CartTable, ClienteSelector, NuevoClienteModal, PresupuestoPrintArea, TotalsPanel), Toasts, TopBar, ConfirmDialog
     └── router/        # Vue Router config
 ```
