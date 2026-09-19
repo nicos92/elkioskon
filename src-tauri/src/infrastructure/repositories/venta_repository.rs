@@ -500,13 +500,7 @@ mod tests {
     }
 
     fn venta_con_detalle(cliente_id: i64) -> VentaWithDetalle {
-        let id_articulo: i64 = {
-            let conn = DB.lock().unwrap();
-            conn.query_row("SELECT id_articulo FROM stock LIMIT 1", [], |row| {
-                row.get(0)
-            })
-            .unwrap()
-        };
+        let id_articulo: i64 = id_articulo_primero();
 
         let mut venta = Venta::new(
             admin_user_id(),
@@ -694,6 +688,54 @@ mod tests {
 
     fn id_articulo_primero() -> i64 {
         let conn = DB.lock().unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO proveedores (cuit, proveedor, nombre) VALUES ('50-00000000-1', 'Proveedor Prueba', 'Test')",
+            [],
+        )
+        .unwrap();
+        let proveedor_id: i64 = conn
+            .query_row(
+                "SELECT id FROM proveedores WHERE cuit = '50-00000000-1'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO categorias (categoria) VALUES ('Categoria Prueba')",
+            [],
+        )
+        .unwrap();
+        let categoria_id: i64 = conn
+            .query_row(
+                "SELECT id FROM categorias WHERE categoria = 'Categoria Prueba'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO sub_categorias (sub_categoria, id_categoria) VALUES ('Subcategoria Prueba', ?1)",
+            params![categoria_id],
+        )
+        .unwrap();
+        let sub_categoria_id: i64 = conn
+            .query_row(
+                "SELECT id FROM sub_categorias WHERE sub_categoria = 'Subcategoria Prueba'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO articulos (articulo, cod_articulo, id_sub_categoria, id_proveedor)
+             VALUES ('Articulo Prueba', 'ART-PRUEBA', ?1, ?2)",
+            params![sub_categoria_id, proveedor_id],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO stock (id_articulo, cantidad, costo, ganancia, updated_at)
+             VALUES ((SELECT id FROM articulos WHERE cod_articulo = 'ART-PRUEBA'), 100.0, 20.0, 10.0, ?1)",
+            params![chrono::Utc::now().to_rfc3339()],
+        )
+        .unwrap();
         conn.query_row("SELECT id_articulo FROM stock LIMIT 1", [], |row| {
             row.get(0)
         })

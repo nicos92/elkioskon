@@ -447,19 +447,66 @@ mod tests {
 
     fn first_articulo_with_stock() -> (i64, f64, f64, f64) {
         let conn = DB.lock().unwrap();
-        conn.query_row(
-            "SELECT s.id_articulo, s.cantidad, s.costo, s.ganancia FROM stock s ORDER BY s.id LIMIT 1",
+        conn.execute(
+            "INSERT OR IGNORE INTO proveedores (cuit, proveedor, nombre) VALUES ('50-00000000-1', 'Proveedor Prueba', 'Test')",
             [],
-            |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, f64>(1)?,
-                    row.get::<_, f64>(2)?,
-                    row.get::<_, f64>(3)?,
-                ))
-            },
         )
-        .unwrap()
+        .unwrap();
+        let proveedor_id: i64 = conn
+            .query_row(
+                "SELECT id FROM proveedores WHERE cuit = '50-00000000-1'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO categorias (categoria) VALUES ('Categoria Prueba')",
+            [],
+        )
+        .unwrap();
+        let categoria_id: i64 = conn
+            .query_row(
+                "SELECT id FROM categorias WHERE categoria = 'Categoria Prueba'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO sub_categorias (sub_categoria, id_categoria) VALUES ('Subcategoria Prueba', ?1)",
+            params![categoria_id],
+        )
+        .unwrap();
+        let sub_categoria_id: i64 = conn
+            .query_row(
+                "SELECT id FROM sub_categorias WHERE sub_categoria = 'Subcategoria Prueba'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO articulos (articulo, cod_articulo, id_sub_categoria, id_proveedor)
+             VALUES ('Articulo Prueba', 'ART-PRUEBA', ?1, ?2)",
+            params![sub_categoria_id, proveedor_id],
+        )
+        .unwrap();
+        let id_articulo: i64 = conn
+            .query_row(
+                "SELECT id FROM articulos WHERE cod_articulo = 'ART-PRUEBA'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let cantidad = 100.0;
+        let costo = 50.0;
+        let ganancia = 30.0;
+        let now = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            "INSERT OR IGNORE INTO stock (id_articulo, cantidad, costo, ganancia, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![id_articulo, cantidad, costo, ganancia, now],
+        )
+        .unwrap();
+        (id_articulo, cantidad, costo, ganancia)
     }
 
     fn presupuesto_con_detalle() -> PresupuestoWithDetalle {

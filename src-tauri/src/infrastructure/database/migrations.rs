@@ -197,8 +197,32 @@ mod tests {
         .unwrap();
         let presupuesto_id = conn.last_insert_rowid();
         conn.execute(
+            "INSERT INTO proveedores (cuit, proveedor, nombre) VALUES ('50-00000000-1', 'Proveedor Prueba', 'Test')",
+            [],
+        )
+        .unwrap();
+        let proveedor_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO categorias (categoria) VALUES ('Categoria Prueba')",
+            [],
+        )
+        .unwrap();
+        let categoria_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO sub_categorias (sub_categoria, id_categoria) VALUES ('Subcategoria Prueba', ?1)",
+            rusqlite::params![categoria_id],
+        )
+        .unwrap();
+        let sub_categoria_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO articulos (articulo, cod_articulo, id_sub_categoria, id_proveedor)
+             VALUES ('Articulo Prueba', 'ART-PRUEBA', ?1, ?2)",
+            rusqlite::params![sub_categoria_id, proveedor_id],
+        )
+        .unwrap();
+        conn.execute(
             "INSERT INTO detalle_presupuestos (id_presupuesto, id_articulo, cantidad, costo_unitario, precio_unitario, subtotal)
-             VALUES (?1, (SELECT id FROM articulos LIMIT 1), 1, 0, 100, 100)",
+             VALUES (?1, (SELECT id FROM articulos WHERE cod_articulo = 'ART-PRUEBA'), 1, 0, 100, 100)",
             rusqlite::params![presupuesto_id],
         )
         .unwrap();
