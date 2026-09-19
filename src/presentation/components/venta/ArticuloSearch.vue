@@ -24,19 +24,22 @@ defineExpose({ focus });
 </script>
 
 <template>
-    <div class="form-group">
-        <label>Buscar artículo por código o nombre</label>
-        <input
-            ref="inputEl"
-            :value="query"
-            type="text"
-            placeholder="Escriba el código y presione Enter..."
-            @input="
-                emit('update:query', ($event.target as HTMLInputElement).value)
-            "
-            @keydown.enter.prevent="emit('enter')"
-        />
-    </div>
+    <label class="scan-label" for="scan-input">
+        Código o nombre de artículo
+    </label>
+    <input
+        id="scan-input"
+        ref="inputEl"
+        :value="query"
+        type="text"
+        class="scan-input"
+        autocomplete="off"
+        placeholder="Escanee o escriba y presione Enter…"
+        @input="
+            emit('update:query', ($event.target as HTMLInputElement).value)
+        "
+        @keydown.enter.prevent="emit('enter')"
+    />
     <div v-if="results.length > 0" class="search-results">
         <button
             v-for="result in results"
@@ -64,27 +67,39 @@ defineExpose({ focus });
 </template>
 
 <style scoped>
-.form-group {
-    margin-bottom: 0.75rem;
-}
-
-.form-group label {
+.scan-label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
     font-weight: 500;
+    color: var(--color-text-secondary);
 }
 
-.form-group input {
+.scan-input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.9rem 1rem;
+    font-size: 1.125rem;
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: 8px;
     box-sizing: border-box;
-    background: var(--color-surface);
+    background: var(--color-surface-2);
     color: var(--color-text);
 }
 
+.scan-input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.85;
+}
+
+.scan-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+    background: var(--color-surface);
+}
+
 .search-results {
+    margin-top: 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: 8px;
     overflow: hidden;
@@ -95,13 +110,14 @@ defineExpose({ focus });
     align-items: center;
     gap: 1rem;
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.85rem;
     background: var(--color-surface);
     border: none;
     border-bottom: 1px solid var(--color-border);
     cursor: pointer;
     text-align: left;
     color: var(--color-text);
+    font-variant-numeric: tabular-nums;
 }
 
 .search-result-item:last-child {
@@ -110,6 +126,11 @@ defineExpose({ focus });
 
 .search-result-item:hover {
     background: var(--color-surface-2);
+}
+
+.search-result-item:focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: -2px;
 }
 
 .result-code {

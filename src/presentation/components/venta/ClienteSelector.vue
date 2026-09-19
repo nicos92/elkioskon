@@ -210,4 +210,16 @@ function onBlur() {
 .cliente-limpiar:hover {
     color: var(--color-danger);
 }
+
+.btn-nuevo-cliente:focus-visible,
+.cliente-option:focus-visible,
+.cliente-limpiar:focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 1px;
+}
+
+.cliente-selector input:focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 1px;
+}
 </style>

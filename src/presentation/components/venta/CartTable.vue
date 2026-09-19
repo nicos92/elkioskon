@@ -98,28 +98,45 @@ function toNumber(value: string): number {
 <style scoped>
 .cart-table {
     width: 100%;
-    border-radius: 12px;
-    overflow: hidden;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
 }
 
 .cart-table th,
 .cart-table td {
-    padding: 1rem;
+    padding: 0.7rem 0.8rem;
     text-align: left;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .cart-table th {
-    background: var(--color-surface-2);
+    font-size: 0.8rem;
     font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.cart-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.cart-table tbody td {
+    vertical-align: middle;
 }
 
 .cart-input {
-    width: 90px;
-    padding: 0.5rem;
+    width: 84px;
+    padding: 0.55rem 0.6rem;
     border: 1px solid var(--color-border);
     border-radius: 6px;
     background: var(--color-surface);
     color: var(--color-text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.cart-input:focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 1px;
 }
 
 .btn-icon {
@@ -136,6 +153,12 @@ function toNumber(value: string): number {
 
 .btn-danger:hover {
     opacity: 0.7;
+}
+
+.btn-icon:focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
 .stock-warning-row td {

@@ -8,6 +8,7 @@ import { useConfirm } from "../composables/useConfirm";
 import { formatMoney } from "../utils/format";
 import type { VentaWithDetalle } from "../../domain/entities";
 import { DEFAULT_CLIENT_LABEL } from "../../domain/entities";
+import PrintArea from "../components/ui/PrintArea.vue";
 
 const router = useRouter();
 const ventasStore = useVentasStore();
@@ -297,48 +298,37 @@ function clienteNombre(venta: VentaWithDetalle): string {
         </div>
     </div>
 
-    <Teleport to="body">
-        <div v-if="selectedVenta" class="print-area" id="print-area">
-            <h1>Venta N° {{ selectedVenta.id }}</h1>
-            <p>Fecha: {{ new Date(selectedVenta.fecha).toLocaleString() }}</p>
-            <p>Usuario: {{ selectedVenta.username }}</p>
-            <p>Cliente: {{ clienteNombre(selectedVenta) }}</p>
-            <p v-if="selectedVenta.observacion">
-                Observación: {{ selectedVenta.observacion }}
-            </p>
-            <div class="print-summary">
-                <p class="print-line">Subtotal: {{ formatMoney(selectedVenta.subtotal) }}</p>
-                <p v-if="selectedVenta.descuento > 0" class="print-line">
-                    Descuento ({{ selectedVenta.descuento }}%):
-                    −{{ formatMoney((selectedVenta.subtotal * selectedVenta.descuento) / 100) }}
-                </p>
-                <p class="print-total">Total: {{ formatMoney(selectedVenta.total) }}</p>
-                <p class="print-obs">
-                    Estado: {{ selectedVenta.anulada ? "Anulada" : "Activa" }}
-                </p>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Artículo</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in selectedVenta.items" :key="item.id">
-                        <td>{{ item.cod_articulo }}</td>
-                        <td>{{ item.articulo }}</td>
-                        <td>{{ item.cantidad }}</td>
-                        <td>{{ formatMoney(item.precio_unitario) }}</td>
-                        <td>{{ formatMoney(item.subtotal) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </Teleport>
+    <PrintArea
+        v-if="selectedVenta"
+        :titulo="`Venta N° ${selectedVenta.id}`"
+        :info="[
+            {
+                label: 'Fecha',
+                value: new Date(selectedVenta.fecha).toLocaleString(),
+            },
+            { label: 'Usuario', value: selectedVenta.username },
+            { label: 'Cliente', value: clienteNombre(selectedVenta) },
+        ]"
+        :items="
+            selectedVenta.items.map((item) => ({
+                codigo: item.cod_articulo,
+                articulo: item.articulo,
+                cantidad: item.cantidad,
+                precio: item.precio_unitario,
+                subtotal: item.subtotal,
+            }))
+        "
+        :subtotal="selectedVenta.subtotal"
+        :descuento="selectedVenta.descuento"
+        :descuento-monto="
+            (selectedVenta.subtotal * selectedVenta.descuento) / 100
+        "
+        :total="selectedVenta.total"
+        :observacion="selectedVenta.observacion || undefined"
+        :nota="
+            `Estado: ${selectedVenta.anulada ? 'Anulada' : 'Activa'}`
+        "
+    />
 </template>
 
 <style scoped>
