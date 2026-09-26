@@ -460,11 +460,6 @@ async function handleAnular(presupuesto: PresupuestoWithDetalle) {
     color: var(--color-danger);
 }
 
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
 .btn-icon {
     background: none;
     border: none;

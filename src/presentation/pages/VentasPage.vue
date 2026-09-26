@@ -417,11 +417,6 @@ function clienteNombre(venta: VentaWithDetalle): string {
     font-weight: 500;
 }
 
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
 .btn-icon {
     background: none;
     border: none;

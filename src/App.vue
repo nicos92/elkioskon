@@ -114,8 +114,15 @@ button:not(.btn-icon).btn-danger {
 }
 
 .actions {
-  display: flex;
-  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.actions > * {
+  vertical-align: middle;
+}
+
+.actions > * + * {
+  margin-left: 0.5rem;
 }
 
 .data-table {
@@ -136,6 +143,7 @@ button:not(.btn-icon).btn-danger {
 
 .data-table tbody td {
   border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
 }
 
 .data-table tbody tr:last-child td {
