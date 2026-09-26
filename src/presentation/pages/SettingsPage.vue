@@ -2,22 +2,47 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { getVersion } from "@tauri-apps/api/app";
+import { save } from "@tauri-apps/plugin-dialog";
 
-import { useAuthStore } from "../stores";
+import { useAuthStore, useRespaldoStore } from "../stores";
 import { useNocturnoStore } from "../stores/nocturnoStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useToasts } from "../composables/useToasts";
 import { usePermissions } from "../composables/usePermissions";
+import { formatBytes } from "../utils/format";
 
 const router = useRouter();
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const nocturnoStore = useNocturnoStore();
+const respaldoStore = useRespaldoStore();
 const { success: toastSuccess, error: toastError } = useToasts();
-const { canConfigurarRecargoNocturno } = usePermissions();
+const { canConfigurarRecargoNocturno, canGestionarRespaldos } = usePermissions();
 
 const appVersion = ref("");
+
+function nombreRespaldoSugerido(): string {
+  const ahora = new Date();
+  const dosDigitos = (n: number) => String(n).padStart(2, "0");
+  const sello = [
+    ahora.getFullYear(),
+    dosDigitos(ahora.getMonth() + 1),
+    dosDigitos(ahora.getDate()),
+  ].join("-");
+  const hora = `${dosDigitos(ahora.getHours())}-${dosDigitos(
+    ahora.getMinutes(),
+  )}-${dosDigitos(ahora.getSeconds())}`;
+  return `respaldo-el-kioskon-${sello}_${hora}.db`;
+}
+
+function fechaRespaldo(iso: string): string {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) {
+    return iso;
+  }
+  return fecha.toLocaleString("es-AR");
+}
 
 onMounted(async () => {
     try {
@@ -30,6 +55,9 @@ onMounted(async () => {
         nocturnoActivo.value = nocturnoStore.config.activo;
         nocturnoInicio.value = nocturnoStore.config.hora_inicio;
         nocturnoFin.value = nocturnoStore.config.hora_fin;
+    }
+    if (canGestionarRespaldos()) {
+        await respaldoStore.fetchInfo();
     }
 });
 
@@ -115,6 +143,32 @@ function handleLogout() {
     authStore.logout();
     router.push({ name: "login" });
 }
+
+async function handleRespaldo() {
+    try {
+        const destino = await save({
+            title: "Guardar copia de la base de datos",
+            defaultPath: nombreRespaldoSugerido(),
+            filters: [{ name: "Base de datos SQLite", extensions: ["db"] }],
+        });
+        if (!destino) {
+            return;
+        }
+
+        const ok = await respaldoStore.crearRespaldo(destino);
+        if (ok) {
+            await respaldoStore.fetchInfo();
+            toastSuccess("Copia de seguridad generada correctamente.");
+        } else {
+            toastError(
+                respaldoStore.error ||
+                    "No se pudo generar la copia de seguridad.",
+            );
+        }
+    } catch {
+        toastError("No se pudo generar la copia de seguridad.");
+    }
+}
 </script>
 
 <template>
@@ -199,6 +253,75 @@ function handleLogout() {
                     :disabled="nocturnoSaving || nocturnoStore.isLoading"
                 >
                     {{ nocturnoSaving ? "Guardando..." : "Guardar" }}
+                </button>
+            </div>
+        </div>
+
+        <div v-if="canGestionarRespaldos()" class="settings-section">
+            <h3>Copia de seguridad</h3>
+            <p class="setting-hint">
+                La copia incluye todos los datos: artículos, stock, ventas,
+                clientes, usuarios y configuración. Guárdala en un pendrive o en
+                la nube antes de formatear la computadora.
+            </p>
+            <div
+                v-if="respaldoStore.info"
+                class="setting-item"
+            >
+                <span class="setting-label">Base de datos:</span>
+                <span
+                    class="setting-value path-value"
+                    :title="respaldoStore.info.ruta_base_datos"
+                >
+                    {{
+                        respaldoStore.info.ruta_base_datos
+                    }}
+                </span>
+            </div>
+            <div
+                v-if="respaldoStore.info"
+                class="setting-item"
+            >
+                <span class="setting-label">Tamaño actual:</span>
+                <span class="setting-value">
+                    {{
+                        formatBytes(
+                            respaldoStore.info.tamano_base_datos_bytes,
+                        )
+                    }}
+                </span>
+            </div>
+            <div
+                v-if="respaldoStore.ultimoRespaldo"
+                class="setting-item"
+            >
+                <span class="setting-label">Último respaldo:</span>
+                <span
+                    class="setting-value path-value"
+                    :title="respaldoStore.ultimoRespaldo.ruta"
+                >
+                    {{
+                        formatBytes(
+                            respaldoStore.ultimoRespaldo.tamano_bytes,
+                        )
+                    }}
+                    el {{
+                        fechaRespaldo(respaldoStore.ultimoRespaldo.generado_en)
+                    }}
+                </span>
+            </div>
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    @click="handleRespaldo"
+                    class="btn-primary"
+                    :disabled="respaldoStore.isLoading"
+                >
+                    {{
+                        respaldoStore.isLoading
+                            ? "Generando..."
+                            : "Generar copia de seguridad"
+                    }}
                 </button>
             </div>
         </div>
@@ -308,6 +431,16 @@ h1 {
     color: var(--color-text-muted);
     font-size: 0.85rem;
     margin: 0.5rem 0;
+}
+
+.path-value {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.8rem;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
 }
 
 .setting-select {

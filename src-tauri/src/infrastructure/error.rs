@@ -185,6 +185,12 @@ pub enum AppError {
 
     #[error("No se puede deshacer: {0} artículo(s) fueron modificados después de la operación")]
     CostUpdateModifiedAfter(i64),
+
+    #[error("La ruta elegida para el respaldo no es válida")]
+    RespaldoPathInvalido,
+
+    #[error("No se pudo generar la copia de seguridad: {0}")]
+    RespaldoError(String),
 }
 
 impl From<rusqlite::Error> for AppError {
@@ -272,6 +278,8 @@ impl AppError {
             AppError::CostUpdateNotFound => "cost_update_not_found",
             AppError::CostUpdateAlreadyUndone => "cost_update_already_undone",
             AppError::CostUpdateModifiedAfter(_) => "cost_update_modified_after",
+            AppError::RespaldoPathInvalido => "respaldo_path_invalido",
+            AppError::RespaldoError(_) => "respaldo_error",
         }
     }
 
@@ -409,6 +417,12 @@ impl AppError {
                     "No se puede deshacer: {} artículo(s) fueron modificados después de la operación.",
                     count
                 )
+            }
+            AppError::RespaldoPathInvalido => {
+                "La ruta elegida para el respaldo no es válida.".to_string()
+            }
+            AppError::RespaldoError(detalle) => {
+                format!("No se pudo generar la copia de seguridad: {}", detalle)
             }
         }
     }

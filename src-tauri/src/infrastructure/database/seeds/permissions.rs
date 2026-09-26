@@ -62,6 +62,8 @@ const PERMISSIONS: &[&str] = &[
     "ver_dolar",
     // Ventas - configuración
     "configurar_recargo_nocturno",
+    // Copias de seguridad de la base de datos
+    "gestionar_respaldos",
 ];
 
 pub(crate) fn seed_permissions(conn: &Connection) -> Result<(), rusqlite::Error> {

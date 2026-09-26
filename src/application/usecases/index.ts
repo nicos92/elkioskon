@@ -19,3 +19,4 @@ export * from "./auditoria";
 export * from "./home";
 export * from "./dolar";
 export * from "./nocturno";
+export * from "./respaldo";

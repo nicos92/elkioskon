@@ -9,6 +9,7 @@ import type {
   INocturnoConfigRepository,
   IPresupuestoRepository,
   IProveedorRepository,
+  IRespaldoRepository,
   IStockRepository,
   ISubCategoriaRepository,
   ITipoVentaRepository,
@@ -25,6 +26,7 @@ import { HomeApiRepository } from "./api/homeRepository";
 import { NocturnoConfigApiRepository } from "./api/nocturnoRepository";
 import { PresupuestoApiRepository } from "./api/presupuestoRepository";
 import { ProveedorApiRepository } from "./api/proveedorRepository";
+import { RespaldoApiRepository } from "./api/respaldoRepository";
 import { StockApiRepository } from "./api/stockRepository";
 import { SubCategoriaApiRepository } from "./api/subCategoriaRepository";
 import { TipoVentaApiRepository } from "./api/tipoVentaRepository";
@@ -54,3 +56,5 @@ export const homeRepository: IHomeRepository = new HomeApiRepository();
 export const dollarRepository: IDollarRepository = new DollarApiRepository();
 export const nocturnoConfigRepository: INocturnoConfigRepository =
   new NocturnoConfigApiRepository();
+export const respaldoRepository: IRespaldoRepository =
+  new RespaldoApiRepository();

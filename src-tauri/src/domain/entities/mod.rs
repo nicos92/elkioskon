@@ -13,6 +13,7 @@ pub mod permission;
 pub mod permission_code;
 pub mod presupuesto;
 pub mod proveedor;
+pub mod respaldo;
 pub mod stock;
 pub mod stock_preview;
 pub mod sub_categoria;
@@ -39,6 +40,7 @@ pub use presupuesto::{
     PresupuestoWithDetalle,
 };
 pub use proveedor::{Proveedor, DEFAULT_PROVEEDOR_NOMBRE};
+pub use respaldo::{RespaldoInfo, RespaldoResult};
 pub use stock::Stock;
 pub use stock_preview::StockPreview;
 pub use sub_categoria::SubCategoria;

@@ -23,6 +23,7 @@ pub mod nocturno_commands;
 pub mod permissions;
 pub mod presupuesto_commands;
 pub mod proveedor_commands;
+pub mod respaldo_commands;
 pub mod stock_commands;
 pub mod sub_categoria_commands;
 pub mod tipo_venta_commands;
@@ -61,6 +62,7 @@ pub use proveedor_commands::{
     create_proveedor, delete_proveedor, get_all_proveedores, get_proveedor_by_id, update_proveedor,
     ProveedorAppState,
 };
+pub use respaldo_commands::{crear_respaldo, get_respaldo_info, RespaldoAppState};
 pub use stock_commands::{
     create_stock, delete_stock, get_all_stock, get_precio_venta, get_stock_by_articulo,
     get_stock_by_id, update_stock, StockAppState,

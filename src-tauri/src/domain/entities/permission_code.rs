@@ -50,6 +50,7 @@ pub enum PermissionCode {
     ReopenCierre,
     ViewDolar,
     ConfigurarRecargoNocturno,
+    GestionarRespaldos,
 }
 
 impl PermissionCode {
@@ -102,6 +103,7 @@ impl PermissionCode {
             PermissionCode::ReopenCierre => "reabrir_cierre",
             PermissionCode::ViewDolar => "ver_dolar",
             PermissionCode::ConfigurarRecargoNocturno => "configurar_recargo_nocturno",
+            PermissionCode::GestionarRespaldos => "gestionar_respaldos",
         }
     }
 
@@ -154,6 +156,7 @@ impl PermissionCode {
             PermissionCode::ReopenCierre,
             PermissionCode::ViewDolar,
             PermissionCode::ConfigurarRecargoNocturno,
+            PermissionCode::GestionarRespaldos,
         ]
     }
 }
@@ -235,6 +238,7 @@ mod tests {
             "reabrir_cierre",
             "ver_dolar",
             "configurar_recargo_nocturno",
+            "gestionar_respaldos",
         ];
 
         let mut actual: Vec<String> = PermissionCode::all()

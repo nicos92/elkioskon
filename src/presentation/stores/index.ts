@@ -15,3 +15,4 @@ export { useHomeStore } from "./homeStore";
 export { useDolarStore } from "./dolarStore";
 export { useNocturnoStore } from "./nocturnoStore";
 export { usePresupuestosStore } from "./presupuestosStore";
+export { useRespaldoStore } from "./respaldoStore";

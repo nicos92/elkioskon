@@ -6,23 +6,24 @@ pub mod infrastructure;
 use api::commands::{
     actualizar_cliente, add_permission_to_user, anular_venta, apply_costo_percentage_stock,
     cambiar_estado_presupuesto, change_password, cleanup_cost_update_operations, crear_cierre,
-    crear_cliente, crear_presupuesto, create_articulo, create_categoria, create_permission,
-    create_proveedor, create_stock, create_sub_categoria, create_tipo_venta, create_user,
-    create_venta, delete_articulo, delete_categoria, delete_dollar_quote, delete_proveedor,
-    delete_stock, delete_sub_categoria, delete_tipo_venta, delete_user, eliminar_cliente,
-    ensure_db_ready, fetch_dollar_rates_manual, get_all_articulos, get_all_categorias,
-    get_all_cierres, get_all_clientes, get_all_permissions, get_all_presupuestos,
-    get_all_proveedores, get_all_stock, get_all_sub_categorias, get_all_tipos_venta, get_all_users,
-    get_all_ventas, get_audit_logs, get_cliente_by_id, get_cliente_defecto, get_dollar_quotes,
-    get_home_stats, get_last_undoable_cost_update, get_nocturno_config, get_precio_venta,
-    get_presupuesto_by_id, get_proveedor_by_id, get_stock_by_articulo, get_stock_by_id,
-    get_stock_preview_costo, get_sub_categorias_by_categoria, get_user_permissions,
-    get_venta_by_id, get_ventas_por_cliente, is_dia_cerrado, login, reabrir_cierre,
-    remove_permission_from_user, save_nocturno_config, undo_cost_update, update_articulo,
-    update_categoria, update_proveedor, update_stock, update_sub_categoria, update_tipo_venta,
-    update_user, AppState, ArticuloAppState, AuditLogAppState, CategoriaAppState, CierreAppState,
-    ClienteAppState, CostUpdateAppState, DollarAppState, HomeStatsAppState, NocturnoConfigAppState,
-    PresupuestoAppState, ProveedorAppState, StockAppState, SubCategoriaAppState, TipoVentaAppState,
+    crear_cliente, crear_presupuesto, crear_respaldo, create_articulo, create_categoria,
+    create_permission, create_proveedor, create_stock, create_sub_categoria, create_tipo_venta,
+    create_user, create_venta, delete_articulo, delete_categoria, delete_dollar_quote,
+    delete_proveedor, delete_stock, delete_sub_categoria, delete_tipo_venta, delete_user,
+    eliminar_cliente, ensure_db_ready, fetch_dollar_rates_manual, get_all_articulos,
+    get_all_categorias, get_all_cierres, get_all_clientes, get_all_permissions,
+    get_all_presupuestos, get_all_proveedores, get_all_stock, get_all_sub_categorias,
+    get_all_tipos_venta, get_all_users, get_all_ventas, get_audit_logs, get_cliente_by_id,
+    get_cliente_defecto, get_dollar_quotes, get_home_stats, get_last_undoable_cost_update,
+    get_nocturno_config, get_precio_venta, get_presupuesto_by_id, get_proveedor_by_id,
+    get_respaldo_info, get_stock_by_articulo, get_stock_by_id, get_stock_preview_costo,
+    get_sub_categorias_by_categoria, get_user_permissions, get_venta_by_id, get_ventas_por_cliente,
+    is_dia_cerrado, login, reabrir_cierre, remove_permission_from_user, save_nocturno_config,
+    undo_cost_update, update_articulo, update_categoria, update_proveedor, update_stock,
+    update_sub_categoria, update_tipo_venta, update_user, AppState, ArticuloAppState,
+    AuditLogAppState, CategoriaAppState, CierreAppState, ClienteAppState, CostUpdateAppState,
+    DollarAppState, HomeStatsAppState, NocturnoConfigAppState, PresupuestoAppState,
+    ProveedorAppState, RespaldoAppState, StockAppState, SubCategoriaAppState, TipoVentaAppState,
     VentaAppState,
 };
 
@@ -30,6 +31,7 @@ use api::commands::{
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(AppState::new())
         .manage(AuditLogAppState::new())
         .manage(HomeStatsAppState::new())
@@ -46,6 +48,7 @@ pub fn run() {
         .manage(ClienteAppState::new())
         .manage(DollarAppState::new())
         .manage(NocturnoConfigAppState::new())
+        .manage(RespaldoAppState::new())
         .invoke_handler(tauri::generate_handler![
             ensure_db_ready,
             get_home_stats,
@@ -115,6 +118,8 @@ pub fn run() {
             delete_dollar_quote,
             get_nocturno_config,
             save_nocturno_config,
+            crear_respaldo,
+            get_respaldo_info,
             crear_presupuesto,
             get_all_presupuestos,
             get_presupuesto_by_id,

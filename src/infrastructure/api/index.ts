@@ -9,6 +9,7 @@ export * from "./homeRepository";
 export * from "./nocturnoRepository";
 export * from "./presupuestoRepository";
 export * from "./proveedorRepository";
+export * from "./respaldoRepository";
 export * from "./stockRepository";
 export * from "./subCategoriaRepository";
 export * from "./tipoVentaRepository";

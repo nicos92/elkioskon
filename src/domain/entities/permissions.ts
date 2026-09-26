@@ -46,6 +46,7 @@ export const PERMISSIONS = {
   REABRIR_CIERRE: "reabrir_cierre",
   VIEW_DOLAR: "ver_dolar",
   CONFIGURAR_RECARGO_NOCTURNO: "configurar_recargo_nocturno",
+  GESTIONAR_RESPALDOS: "gestionar_respaldos",
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

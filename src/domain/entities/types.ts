@@ -502,3 +502,14 @@ export interface CostUpdateOperationResponse {
 export interface UndoOperationResult {
   restored_count: number;
 }
+
+export interface RespaldoResult {
+  ruta: string;
+  tamano_bytes: number;
+  generado_en: string;
+}
+
+export interface RespaldoInfo {
+  ruta_base_datos: string;
+  tamano_base_datos_bytes: number;
+}
