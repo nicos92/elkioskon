@@ -149,8 +149,7 @@ mod tests {
 
     #[test]
     fn migrate_presupuestos_estado_adds_anulado_and_preserves_data() {
-        let _guard = crate::infrastructure::database::TEST_LOCK.lock().unwrap();
-        crate::infrastructure::database::reset_test_db().unwrap();
+        let _guard = crate::infrastructure::database::fresh_test_db();
         let conn = DB.lock().unwrap();
 
         conn.execute_batch(
@@ -270,8 +269,7 @@ mod tests {
 
     #[test]
     fn migrate_presupuestos_estado_is_idempotent() {
-        let _guard = crate::infrastructure::database::TEST_LOCK.lock().unwrap();
-        crate::infrastructure::database::reset_test_db().unwrap();
+        let _guard = crate::infrastructure::database::fresh_test_db();
         let conn = DB.lock().unwrap();
 
         let count_before: i64 = conn

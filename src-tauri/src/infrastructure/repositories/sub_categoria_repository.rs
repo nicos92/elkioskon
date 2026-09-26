@@ -149,15 +149,8 @@ mod tests {
     use super::*;
     use crate::domain::entities::Categoria;
     use crate::domain::repositories::CategoriaRepository;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::SqliteCategoriaRepository;
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn create_categoria(cat_repo: &SqliteCategoriaRepository) -> Categoria {
         cat_repo
@@ -167,7 +160,7 @@ mod tests {
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cat_repo = SqliteCategoriaRepository::new();
         let cat = create_categoria(&cat_repo);
         let repo = SqliteSubCategoriaRepository::new();
@@ -184,7 +177,7 @@ mod tests {
 
     #[test]
     fn find_by_name_and_by_categoria() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cat_repo = SqliteCategoriaRepository::new();
         let cat = create_categoria(&cat_repo);
         let repo = SqliteSubCategoriaRepository::new();
@@ -201,7 +194,7 @@ mod tests {
 
     #[test]
     fn update_moves_between_categorias() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cat_repo = SqliteCategoriaRepository::new();
         let cat_a = create_categoria(&cat_repo);
         let cat_b = cat_repo
@@ -221,7 +214,7 @@ mod tests {
 
     #[test]
     fn delete_removes_sub_categoria() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cat_repo = SqliteCategoriaRepository::new();
         let cat = create_categoria(&cat_repo);
         let repo = SqliteSubCategoriaRepository::new();
@@ -235,7 +228,7 @@ mod tests {
 
     #[test]
     fn has_articulos_returns_false_without_articulos() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cat_repo = SqliteCategoriaRepository::new();
         let cat = create_categoria(&cat_repo);
         let repo = SqliteSubCategoriaRepository::new();

@@ -6,6 +6,6 @@ mod schema;
 mod seeds;
 
 pub use config::{get_db_path, BCRYPT_COST};
-pub use connection::{init_database, DB};
 #[cfg(test)]
-pub use connection::{reset_test_db, TEST_LOCK};
+pub use connection::{fresh_test_db, reset_test_db};
+pub use connection::{init_database, DB};

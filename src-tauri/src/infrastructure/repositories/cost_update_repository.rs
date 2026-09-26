@@ -330,18 +330,11 @@ mod tests {
         ArticuloRepository, CategoriaRepository, ProveedorRepository, StockRepository,
         SubCategoriaRepository,
     };
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::{
         SqliteArticuloRepository, SqliteCategoriaRepository, SqliteProveedorRepository,
         SqliteStockRepository, SqliteSubCategoriaRepository,
     };
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn create_articulo_with_names(cat_name: &str, sub_name: &str, prov_code: &str) -> Articulo {
         let cat_repo = SqliteCategoriaRepository::new();
@@ -389,7 +382,7 @@ mod tests {
 
     #[test]
     fn apply_with_history_creates_operation_and_items() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat CU1", "Sub CU1", "CU1");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -424,7 +417,7 @@ mod tests {
 
     #[test]
     fn apply_with_history_with_category_filter() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat CU3", "Sub CU3", "CU3");
         let art2 = create_articulo_with_names("Cat Other", "Sub Other", "CU3o");
         let stock_repo = SqliteStockRepository::new();
@@ -452,7 +445,7 @@ mod tests {
 
     #[test]
     fn apply_with_history_returns_no_matches_when_empty() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let _art = create_articulo_with_names("Cat Empty", "Sub Empty", "EMPTY");
         let repo = SqliteCostUpdateRepository::new();
         let user_id = get_admin_user_id();
@@ -466,7 +459,7 @@ mod tests {
 
     #[test]
     fn apply_with_history_negative_porcentaje() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat CU4", "Sub CU4", "CU4");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -491,14 +484,14 @@ mod tests {
 
     #[test]
     fn find_last_undoable_returns_none_when_empty() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCostUpdateRepository::new();
         assert!(repo.find_last_undoable().unwrap().is_none());
     }
 
     #[test]
     fn find_last_undoable_returns_most_recent() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat LR1", "Sub LR1", "LR1");
         let art2 = create_articulo_with_names("Cat LR2", "Sub LR2", "LR2");
         let stock_repo = SqliteStockRepository::new();
@@ -531,7 +524,7 @@ mod tests {
 
     #[test]
     fn find_last_undoable_returns_none_when_all_undone() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat NU", "Sub NU", "NU");
         let stock_repo = SqliteStockRepository::new();
         stock_repo
@@ -551,7 +544,7 @@ mod tests {
 
     #[test]
     fn undo_operation_restores_costo() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat UN1", "Sub UN1", "UN1");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -577,7 +570,7 @@ mod tests {
 
     #[test]
     fn undo_operation_marks_as_undone() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat UN2", "Sub UN2", "UN2");
         let stock_repo = SqliteStockRepository::new();
         stock_repo
@@ -612,7 +605,7 @@ mod tests {
 
     #[test]
     fn undo_operation_rejects_already_undone() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat UN3", "Sub UN3", "UN3");
         let stock_repo = SqliteStockRepository::new();
         stock_repo
@@ -633,7 +626,7 @@ mod tests {
 
     #[test]
     fn undo_operation_rejects_when_stock_modified_after() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat UN4", "Sub UN4", "UN4");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -657,7 +650,7 @@ mod tests {
 
     #[test]
     fn undo_operation_rejects_nonexistent() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCostUpdateRepository::new();
 
         let err = repo.undo_operation(99999).unwrap_err();
@@ -666,7 +659,7 @@ mod tests {
 
     #[test]
     fn apply_then_undo_roundtrip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat RT", "Sub RT", "RT");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -701,7 +694,7 @@ mod tests {
 
     #[test]
     fn apply_stores_filters_in_operation() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat FL", "Sub FL", "FL");
         let stock_repo = SqliteStockRepository::new();
         stock_repo

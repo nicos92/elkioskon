@@ -133,17 +133,10 @@ mod tests {
     use crate::domain::repositories::{
         CategoriaRepository, ProveedorRepository, SubCategoriaRepository,
     };
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::{
         SqliteCategoriaRepository, SqliteProveedorRepository, SqliteSubCategoriaRepository,
     };
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     struct Fixture {
         id_sub_categoria: i64,
@@ -178,7 +171,7 @@ mod tests {
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let fx = create_fixture();
         let repo = SqliteArticuloRepository::new();
 
@@ -201,7 +194,7 @@ mod tests {
 
     #[test]
     fn find_by_codigo_and_duplicate_codigo_error() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let fx = create_fixture();
         let repo = SqliteArticuloRepository::new();
 
@@ -230,7 +223,7 @@ mod tests {
 
     #[test]
     fn find_all_and_update() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let fx = create_fixture();
         let repo = SqliteArticuloRepository::new();
 
@@ -254,7 +247,7 @@ mod tests {
 
     #[test]
     fn delete_removes_articulo() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let fx = create_fixture();
         let repo = SqliteArticuloRepository::new();
 

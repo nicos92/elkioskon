@@ -4,7 +4,7 @@ use tauri::State;
 use rusqlite::params;
 
 use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, AuditDetail, ArticuloService};
+use crate::application::services::{log_audit, ArticuloService, AuditDetail};
 use crate::domain::entities::{Articulo, AuditAction, AuditScreen, PermissionCode};
 use crate::infrastructure::database::DB;
 use crate::infrastructure::error::AppError;

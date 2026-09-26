@@ -80,18 +80,11 @@ mod tests {
     use crate::domain::repositories::{
         ArticuloRepository, CategoriaRepository, ProveedorRepository, SubCategoriaRepository,
     };
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::{
         SqliteArticuloRepository, SqliteCategoriaRepository, SqliteCostUpdateRepository,
         SqliteProveedorRepository, SqliteStockRepository, SqliteSubCategoriaRepository,
     };
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn create_articulo_with_names(cat_name: &str, sub_name: &str, prov_code: &str) -> Articulo {
         let cat_repo = SqliteCategoriaRepository::new();
@@ -140,7 +133,7 @@ mod tests {
 
     #[test]
     fn apply_rejects_zero_porcentaje() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = create_service();
         let user_id = get_admin_user_id();
         let err = service
@@ -151,7 +144,7 @@ mod tests {
 
     #[test]
     fn apply_rejects_nan() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = create_service();
         let user_id = get_admin_user_id();
         let err = service
@@ -162,7 +155,7 @@ mod tests {
 
     #[test]
     fn apply_rejects_below_minus_100() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = create_service();
         let user_id = get_admin_user_id();
         let err = service
@@ -173,7 +166,7 @@ mod tests {
 
     #[test]
     fn apply_creates_operation_with_correct_data() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat SV1", "Sub SV1", "SV1");
         let stock_repo = SqliteStockRepository::new();
         stock_repo
@@ -199,7 +192,7 @@ mod tests {
 
     #[test]
     fn get_preview_returns_preview() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat SV2", "Sub SV2", "SV2");
         let stock_repo = SqliteStockRepository::new();
         stock_repo
@@ -219,7 +212,7 @@ mod tests {
 
     #[test]
     fn get_preview_rejects_invalid_porcentaje() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = create_service();
         assert!(matches!(
             service.get_preview(0.0, None, None, None),
@@ -229,7 +222,7 @@ mod tests {
 
     #[test]
     fn undo_restores_and_is_reflected() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat SV3", "Sub SV3", "SV3");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo
@@ -258,7 +251,7 @@ mod tests {
 
     #[test]
     fn undo_rejects_modified_after() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat SV4", "Sub SV4", "SV4");
         let stock_repo = SqliteStockRepository::new();
         let stock = stock_repo

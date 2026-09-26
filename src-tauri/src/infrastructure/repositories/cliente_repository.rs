@@ -142,14 +142,7 @@ impl SqliteClienteRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     fn sample_cliente() -> Cliente {
         Cliente::new(
@@ -163,7 +156,7 @@ mod tests {
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         let created = repo.create(&sample_cliente()).unwrap();
@@ -181,7 +174,7 @@ mod tests {
 
     #[test]
     fn find_default_returns_seeded_consumidor_final() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         let default = repo.find_default().unwrap().unwrap();
@@ -191,7 +184,7 @@ mod tests {
 
     #[test]
     fn find_default_is_unique_after_multiple_seeds() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         let all = repo.find_all().unwrap();
@@ -201,7 +194,7 @@ mod tests {
 
     #[test]
     fn find_all_and_update() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         let mut created = repo.create(&sample_cliente()).unwrap();
@@ -216,7 +209,7 @@ mod tests {
 
     #[test]
     fn delete_removes_cliente() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         let created = repo.create(&sample_cliente()).unwrap();
@@ -226,7 +219,7 @@ mod tests {
 
     #[test]
     fn find_all_orders_by_nombre_then_apellido() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteClienteRepository::new();
 
         repo.create(&Cliente::new(

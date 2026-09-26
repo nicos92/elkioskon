@@ -35,8 +35,8 @@ impl NocturnoConfigService {
 }
 
 fn validate_config(config: &NocturnoConfig) -> Result<(), AppError> {
-    let inicio = HoraConfig::from_hhmm(&config.hora_inicio)
-        .ok_or(AppError::RecargoNocturnoInvalido)?;
+    let inicio =
+        HoraConfig::from_hhmm(&config.hora_inicio).ok_or(AppError::RecargoNocturnoInvalido)?;
     let fin = HoraConfig::from_hhmm(&config.hora_fin).ok_or(AppError::RecargoNocturnoInvalido)?;
 
     if inicio.minutos_desde_medianoche() == fin.minutos_desde_medianoche() {

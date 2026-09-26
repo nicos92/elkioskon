@@ -43,11 +43,7 @@ impl Default for NocturnoConfig {
     }
 }
 
-pub fn es_horario_nocturno(
-    ahora_minutos: u32,
-    inicio_minutos: u32,
-    fin_minutos: u32,
-) -> bool {
+pub fn es_horario_nocturno(ahora_minutos: u32, inicio_minutos: u32, fin_minutos: u32) -> bool {
     if inicio_minutos == fin_minutos {
         return false;
     }

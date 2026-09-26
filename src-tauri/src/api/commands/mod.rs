@@ -51,9 +51,7 @@ pub use dollar_commands::{
     delete_dollar_quote, fetch_dollar_rates_manual, get_dollar_quotes, DollarAppState,
 };
 pub use home_commands::{get_home_stats, HomeStatsAppState};
-pub use nocturno_commands::{
-    get_nocturno_config, save_nocturno_config, NocturnoConfigAppState,
-};
+pub use nocturno_commands::{get_nocturno_config, save_nocturno_config, NocturnoConfigAppState};
 pub use presupuesto_commands::{
     cambiar_estado_presupuesto, crear_presupuesto, get_all_presupuestos, get_presupuesto_by_id,
     PresupuestoAppState,
@@ -200,7 +198,10 @@ pub fn create_user(
         user_id,
         AuditScreen::Usuarios,
         AuditAction::Create,
-        Some(format!("Usuario creado: {} (id {})", user.username, user.id)),
+        Some(format!(
+            "Usuario creado: {} (id {})",
+            user.username, user.id
+        )),
     )?;
     Ok(user.into())
 }

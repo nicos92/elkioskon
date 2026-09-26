@@ -242,7 +242,9 @@ impl AppError {
             AppError::StockNotFound => "stock_not_found",
             AppError::StockExistsForArticulo => "stock_exists_for_articulo",
             AppError::ProveedorHasArticulos => "proveedor_has_articulos",
-            AppError::NoSePuedeModificarProveedorDefecto => "no_se_puede_modificar_proveedor_defecto",
+            AppError::NoSePuedeModificarProveedorDefecto => {
+                "no_se_puede_modificar_proveedor_defecto"
+            }
             AppError::NoSePuedeEliminarProveedorDefecto => "no_se_puede_eliminar_proveedor_defecto",
             AppError::ClienteNotFound => "cliente_not_found",
             AppError::ClienteSinDatosDeContacto => "cliente_sin_datos_de_contacto",
@@ -398,8 +400,7 @@ impl AppError {
             }
             AppError::DollarQuoteNotFound => "La cotización del dólar no existe.".to_string(),
             AppError::RecargoNocturnoInvalido => {
-                "La configuración de turnos es inválida. Verifique los horarios."
-                    .to_string()
+                "La configuración de turnos es inválida. Verifique los horarios.".to_string()
             }
             AppError::Internal(_) => "Ocurrió un error inesperado. Intente nuevamente.".to_string(),
             AppError::BulkUpdateInvalidPorcentaje => {

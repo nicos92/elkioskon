@@ -146,14 +146,7 @@ impl SqliteProveedorRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     fn sample_proveedor() -> Proveedor {
         Proveedor::new(
@@ -168,7 +161,7 @@ mod tests {
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         let created = repo.create(&sample_proveedor()).unwrap();
@@ -186,7 +179,7 @@ mod tests {
 
     #[test]
     fn create_with_duplicate_cuit_maps_duplicate_value() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         repo.create(&sample_proveedor()).unwrap();
@@ -196,7 +189,7 @@ mod tests {
 
     #[test]
     fn find_by_cuit_returns_none_when_missing() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         assert!(repo.find_by_cuit("30-00000000-1").unwrap().is_none());
@@ -208,7 +201,7 @@ mod tests {
 
     #[test]
     fn find_all_and_update() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         let mut created = repo.create(&sample_proveedor()).unwrap();
@@ -222,7 +215,7 @@ mod tests {
 
     #[test]
     fn delete_removes_proveedor() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         let created = repo.create(&sample_proveedor()).unwrap();
@@ -232,7 +225,7 @@ mod tests {
 
     #[test]
     fn has_articulos_returns_false_without_articulos() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteProveedorRepository::new();
 
         let created = repo.create(&sample_proveedor()).unwrap();

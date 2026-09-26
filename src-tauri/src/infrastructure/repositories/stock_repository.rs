@@ -251,18 +251,11 @@ mod tests {
     use crate::domain::repositories::{
         ArticuloRepository, CategoriaRepository, ProveedorRepository, SubCategoriaRepository,
     };
-    use crate::infrastructure::database::{reset_test_db, DB, TEST_LOCK};
+    use crate::infrastructure::database::{fresh_test_db, DB};
     use crate::infrastructure::repositories::{
         SqliteArticuloRepository, SqliteCategoriaRepository, SqliteProveedorRepository,
         SqliteSubCategoriaRepository,
     };
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn create_articulo() -> Articulo {
         let cat_repo = SqliteCategoriaRepository::new();
@@ -296,7 +289,7 @@ mod tests {
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
 
@@ -317,7 +310,7 @@ mod tests {
 
     #[test]
     fn find_by_articulo_returns_stock() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
 
@@ -331,7 +324,7 @@ mod tests {
 
     #[test]
     fn update_changes_cantidad() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
 
@@ -351,7 +344,7 @@ mod tests {
 
     #[test]
     fn delete_removes_stock() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
 
@@ -387,7 +380,7 @@ mod tests {
 
     #[test]
     fn has_ventas_returns_true_when_article_has_sales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
         repo.create(&Stock::new(articulo.id, 10.0, 100.0, 25.0))
@@ -400,7 +393,7 @@ mod tests {
 
     #[test]
     fn has_ventas_returns_false_when_article_has_no_sales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let repo = SqliteStockRepository::new();
         repo.create(&Stock::new(articulo.id, 10.0, 100.0, 25.0))
@@ -442,7 +435,7 @@ mod tests {
 
     #[test]
     fn find_filtered_with_preview_no_filter_returns_all() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat A", "Sub A", "P1");
         let art2 = create_articulo_with_names("Cat B", "Sub B", "P2");
         let repo = SqliteStockRepository::new();
@@ -471,7 +464,7 @@ mod tests {
 
     #[test]
     fn find_filtered_with_preview_matches_category_filter() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat Cable", "Sub Cable", "P1");
         let art2 = create_articulo_with_names("Cat Otro", "Sub Otro", "P2");
         let repo = SqliteStockRepository::new();
@@ -494,7 +487,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_increases_all() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat X", "Sub X", "PX1");
         let art2 = create_articulo_with_names("Cat Y", "Sub Y", "PX2");
         let repo = SqliteStockRepository::new();
@@ -527,7 +520,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_with_category_filter() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat Filter", "Sub Filter", "PF1");
         let art2 = create_articulo_with_names("Cat Other", "Sub Other", "PF2");
         let repo = SqliteStockRepository::new();
@@ -554,7 +547,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_no_filter_returns_zero_when_no_stock() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let _art = create_articulo_with_names("Cat Empty", "Sub Empty", "EMPTY1");
         let repo = SqliteStockRepository::new();
 

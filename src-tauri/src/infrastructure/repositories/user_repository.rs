@@ -257,18 +257,12 @@ impl SqliteUserRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::domain::entities::PermissionCode;
+    use crate::infrastructure::database::fresh_test_db;
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         let created = repo
@@ -284,7 +278,7 @@ mod tests {
 
     #[test]
     fn find_by_username_returns_none_when_missing() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         assert!(repo.find_by_username("testuser").unwrap().is_none());
@@ -298,7 +292,7 @@ mod tests {
 
     #[test]
     fn find_all_excludes_admin() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         repo.create(&User::new("testuser".to_string(), "secret".to_string()))
@@ -310,7 +304,7 @@ mod tests {
 
     #[test]
     fn update_changes_username() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         let mut created = repo
@@ -326,7 +320,7 @@ mod tests {
 
     #[test]
     fn delete_removes_user_and_permissions() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         let created = repo
@@ -342,7 +336,7 @@ mod tests {
 
     #[test]
     fn add_and_remove_permission() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         let user = repo
@@ -367,7 +361,7 @@ mod tests {
 
     #[test]
     fn create_permission_duplicate_maps_duplicate_value() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
         let err = repo
@@ -378,12 +372,22 @@ mod tests {
 
     #[test]
     fn get_all_permissions_returns_seeded_permissions() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteUserRepository::new();
 
-        let perms = repo.get_all_permissions().unwrap();
-        assert_eq!(perms.len(), 48);
-        assert!(perms.iter().any(|p| p.permission == "ver_usuarios"));
-        assert!(perms.iter().any(|p| p.permission == "ver_clientes"));
+        let mut actual: Vec<String> = repo
+            .get_all_permissions()
+            .unwrap()
+            .into_iter()
+            .map(|p| p.permission)
+            .collect();
+        let mut expected: Vec<String> = PermissionCode::all()
+            .iter()
+            .map(|c| c.as_str().to_string())
+            .collect();
+
+        actual.sort_unstable();
+        expected.sort_unstable();
+        assert_eq!(actual, expected);
     }
 }

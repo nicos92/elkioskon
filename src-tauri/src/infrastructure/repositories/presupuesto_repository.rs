@@ -428,14 +428,7 @@ fn turno_actual(conn: &rusqlite::Connection) -> Result<(bool, bool), AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     fn admin_user_id() -> i64 {
         let conn = DB.lock().unwrap();
@@ -528,7 +521,7 @@ mod tests {
 
     #[test]
     fn create_persists_encabezado_y_detalles() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let (id_articulo, _, _, _) = first_articulo_with_stock();
 
         let presupuesto = Presupuesto::new(
@@ -565,7 +558,7 @@ mod tests {
 
     #[test]
     fn create_no_decrements_stock() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let (id_articulo, cantidad_antes, _, _) = first_articulo_with_stock();
 
         let presupuesto = Presupuesto::new(
@@ -594,7 +587,7 @@ mod tests {
 
     #[test]
     fn create_with_optional_cliente() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let created = presupuesto_con_detalle();
         assert_eq!(created.cliente_id, None);
         assert_eq!(created.cliente_nombre.as_deref(), Some(""));
@@ -608,7 +601,7 @@ mod tests {
 
     #[test]
     fn create_allowed_when_day_closed() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let hoy = chrono::Local::now().format("%Y-%m-%d").to_string();
         {
             let conn = DB.lock().unwrap();
@@ -625,7 +618,7 @@ mod tests {
 
     #[test]
     fn create_rejects_articulo_sin_stock() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let presupuesto = Presupuesto::new(
             admin_user_id(),
             "2026-01-01T00:00:00Z".to_string(),
@@ -643,7 +636,7 @@ mod tests {
 
     #[test]
     fn find_page_returns_items_bulk() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let p1 = presupuesto_con_detalle();
         let p2 = presupuesto_con_detalle();
 
@@ -661,7 +654,7 @@ mod tests {
 
     #[test]
     fn find_page_filters_by_estado() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         presupuesto_con_detalle();
         let p2 = presupuesto_con_detalle();
         SqlitePresupuestoRepository::new()
@@ -691,7 +684,7 @@ mod tests {
 
     #[test]
     fn find_page_filters_by_date_range() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let p1 = presupuesto_con_detalle();
         let p2 = presupuesto_con_detalle();
         {
@@ -722,7 +715,7 @@ mod tests {
 
     #[test]
     fn find_page_filters_by_query_on_articulo() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let (id_articulo, _, _, _) = first_articulo_with_stock();
         let articulo_nombre: String = {
             let conn = DB.lock().unwrap();
@@ -759,7 +752,7 @@ mod tests {
 
     #[test]
     fn update_estado_allows_from_non_terminal_states() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let p = presupuesto_con_detalle();
         let repo = SqlitePresupuestoRepository::new();
 
@@ -782,7 +775,7 @@ mod tests {
 
     #[test]
     fn update_estado_rejects_terminal_states() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let p = presupuesto_con_detalle();
         let repo = SqlitePresupuestoRepository::new();
 
@@ -804,7 +797,7 @@ mod tests {
 
     #[test]
     fn update_estado_rejects_missing_presupuesto() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let err = SqlitePresupuestoRepository::new()
             .update_estado(999999, PresupuestoEstado::Anulado)
             .unwrap_err();

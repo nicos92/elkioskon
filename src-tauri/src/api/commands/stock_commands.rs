@@ -142,14 +142,23 @@ pub fn update_stock(
         .cambio("cantidad", antes.cantidad, result.cantidad)
         .cambio("costo", antes.costo, result.costo)
         .cambio("ganancia", antes.ganancia, result.ganancia)
-        .cambio("ganancia_diurna", antes.ganancia_diurna, result.ganancia_diurna)
+        .cambio(
+            "ganancia_diurna",
+            antes.ganancia_diurna,
+            result.ganancia_diurna,
+        )
         .cambio(
             "ganancia_nocturna",
             antes.ganancia_nocturna,
             result.ganancia_nocturna,
         )
         .to_json();
-    log_audit(user_id, AuditScreen::Stock, AuditAction::Update, Some(detail))?;
+    log_audit(
+        user_id,
+        AuditScreen::Stock,
+        AuditAction::Update,
+        Some(detail),
+    )?;
     Ok(result)
 }
 
@@ -186,7 +195,10 @@ pub fn get_precio_venta(
 }
 
 fn articulo_label(id_articulo: i64) -> Result<String, AppError> {
-    query_articulo_label("SELECT articulo, cod_articulo FROM articulos WHERE id = ?1", id_articulo)
+    query_articulo_label(
+        "SELECT articulo, cod_articulo FROM articulos WHERE id = ?1",
+        id_articulo,
+    )
 }
 
 fn articulo_label_by_stock(id_stock: i64) -> Result<String, AppError> {
@@ -202,9 +214,7 @@ fn query_articulo_label(sql: &str, param: i64) -> Result<String, AppError> {
     let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
     let (articulo, cod): (String, String) = conn
-        .query_row(sql, params![param], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })
+        .query_row(sql, params![param], |row| Ok((row.get(0)?, row.get(1)?)))
         .map_err(|e| AppError::Database(e.to_string()))?;
 
     Ok(format!("{} (cód. {})", articulo, cod))

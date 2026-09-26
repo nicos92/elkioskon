@@ -82,10 +82,12 @@ pub fn delete_dollar_quote(
         .get_history()?
         .into_iter()
         .find(|q| q.id == id)
-        .map(|q| format!(
-            "Cotización del dólar id={} eliminada (oficial {}/{}, blue {}/{})",
-            id, q.official_buy, q.official_sell, q.blue_buy, q.blue_sell
-        ))
+        .map(|q| {
+            format!(
+                "Cotización del dólar id={} eliminada (oficial {}/{}, blue {}/{})",
+                id, q.official_buy, q.official_sell, q.blue_buy, q.blue_sell
+            )
+        })
         .unwrap_or_else(|| format!("Cotización del dólar id={} eliminada", id));
     service.delete(id)?;
     let history = service.get_history()?;

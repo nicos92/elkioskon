@@ -85,9 +85,12 @@ pub fn update_categoria(
     check_permission(user_id, PermissionCode::UpdateCategoria)?;
     let antes = service.get_by_id(request.id)?;
     let result = service.update(request.id, request.categoria)?;
-    let detail = AuditDetail::new("categoria", format!("{} (id {})", result.categoria, result.id))
-        .cambio("categoria", &antes.categoria, &result.categoria)
-        .to_json();
+    let detail = AuditDetail::new(
+        "categoria",
+        format!("{} (id {})", result.categoria, result.id),
+    )
+    .cambio("categoria", &antes.categoria, &result.categoria)
+    .to_json();
     log_audit(
         user_id,
         AuditScreen::Categorias,

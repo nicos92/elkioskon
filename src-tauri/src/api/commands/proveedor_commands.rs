@@ -128,7 +128,11 @@ pub fn update_proveedor(
         .cambio("cuit", opt_str(&antes.cuit), opt_str(&result.cuit))
         .cambio("tel", opt_str(&antes.tel), opt_str(&result.tel))
         .cambio("email", opt_str(&antes.email), opt_str(&result.email))
-        .cambio("observacion", opt_str(&antes.observacion), opt_str(&result.observacion))
+        .cambio(
+            "observacion",
+            opt_str(&antes.observacion),
+            opt_str(&result.observacion),
+        )
         .to_json();
     log_audit(
         user_id,
@@ -156,10 +160,7 @@ pub fn delete_proveedor(
         user_id,
         AuditScreen::Proveedores,
         AuditAction::Delete,
-        Some(format!(
-            "Proveedor eliminado: {}",
-            proveedor_label(&antes)
-        )),
+        Some(format!("Proveedor eliminado: {}", proveedor_label(&antes))),
     )?;
     Ok(())
 }

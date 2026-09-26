@@ -81,10 +81,17 @@ pub fn update_tipo_venta(
     check_permission(user_id, PermissionCode::UpdateTipoVenta)?;
     let antes = service.get_by_id(id)?;
     let result = service.update(id, request.nombre, request.hacia_donde)?;
-    let detail = AuditDetail::new("tipo_venta", format!("{} (id {})", result.nombre, result.id))
-        .cambio("nombre", &antes.nombre, &result.nombre)
-        .cambio("hacia_donde", opt_str(&antes.hacia_donde), opt_str(&result.hacia_donde))
-        .to_json();
+    let detail = AuditDetail::new(
+        "tipo_venta",
+        format!("{} (id {})", result.nombre, result.id),
+    )
+    .cambio("nombre", &antes.nombre, &result.nombre)
+    .cambio(
+        "hacia_donde",
+        opt_str(&antes.hacia_donde),
+        opt_str(&result.hacia_donde),
+    )
+    .to_json();
     log_audit(
         user_id,
         AuditScreen::TiposVenta,

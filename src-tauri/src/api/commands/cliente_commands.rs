@@ -137,13 +137,28 @@ pub fn actualizar_cliente(
     };
     let antes = service.get_by_id(request.id)?;
     let result = service.update(&cliente)?;
-    let detail = AuditDetail::new("cliente", format!("{} (id {})", cliente_label(&result), result.id))
-        .cambio("nombre", opt_str(&antes.nombre), opt_str(&result.nombre))
-        .cambio("apellido", opt_str(&antes.apellido), opt_str(&result.apellido))
-        .cambio("telefono", opt_str(&antes.telefono), opt_str(&result.telefono))
-        .cambio("email", opt_str(&antes.email), opt_str(&result.email))
-        .cambio("direccion", opt_str(&antes.direccion), opt_str(&result.direccion))
-        .to_json();
+    let detail = AuditDetail::new(
+        "cliente",
+        format!("{} (id {})", cliente_label(&result), result.id),
+    )
+    .cambio("nombre", opt_str(&antes.nombre), opt_str(&result.nombre))
+    .cambio(
+        "apellido",
+        opt_str(&antes.apellido),
+        opt_str(&result.apellido),
+    )
+    .cambio(
+        "telefono",
+        opt_str(&antes.telefono),
+        opt_str(&result.telefono),
+    )
+    .cambio("email", opt_str(&antes.email), opt_str(&result.email))
+    .cambio(
+        "direccion",
+        opt_str(&antes.direccion),
+        opt_str(&result.direccion),
+    )
+    .to_json();
     log_audit(
         user_id,
         AuditScreen::Clientes,

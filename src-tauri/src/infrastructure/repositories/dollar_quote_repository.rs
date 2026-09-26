@@ -112,14 +112,7 @@ impl DollarQuoteRepository for SqliteDollarQuoteRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     fn sample_quote(official_buy: f64) -> DollarQuote {
         DollarQuote::new(
@@ -132,7 +125,7 @@ mod tests {
 
     #[test]
     fn save_assigns_id_and_timestamp() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         let saved = repo.save(&sample_quote(1000.0)).unwrap();
@@ -147,7 +140,7 @@ mod tests {
 
     #[test]
     fn keeps_at_most_4_quotes_after_5_insertions() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         for i in 1..=5 {
@@ -163,7 +156,7 @@ mod tests {
 
     #[test]
     fn find_all_returns_newest_first() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         for i in 1..=4 {
@@ -177,7 +170,7 @@ mod tests {
 
     #[test]
     fn delete_by_id_removes_only_the_requested_quote() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         repo.save(&sample_quote(100.0)).unwrap();
@@ -193,7 +186,7 @@ mod tests {
 
     #[test]
     fn delete_by_id_errors_for_unknown_id() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         assert!(matches!(
@@ -204,7 +197,7 @@ mod tests {
 
     #[test]
     fn delete_opens_room_for_next_insertion() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteDollarQuoteRepository::new();
 
         let first = repo.save(&sample_quote(100.0)).unwrap();

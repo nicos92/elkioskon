@@ -74,14 +74,7 @@ fn tamano_de_archivo(ruta: &Path) -> Result<u64, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     fn repo() -> SqliteRespaldoRepository {
         SqliteRespaldoRepository::new()
@@ -89,7 +82,7 @@ mod tests {
 
     #[test]
     fn crear_respaldo_genera_un_sqlite_valido() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let dir = tempfile::tempdir().unwrap();
         let destino = dir.path().join("respaldo.db");
 
@@ -103,7 +96,7 @@ mod tests {
 
     #[test]
     fn crear_respaldo_conserva_los_datos_de_la_base() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         {
             let conn = DB.lock().unwrap();
             conn.execute("INSERT INTO categorias (categoria) VALUES ('Bebidas')", [])
@@ -127,7 +120,7 @@ mod tests {
 
     #[test]
     fn crear_respaldo_sobrescribe_un_archivo_previo() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let dir = tempfile::tempdir().unwrap();
         let destino = dir.path().join("respaldo.db");
         std::fs::write(&destino, b"contenido viejo").unwrap();
@@ -144,7 +137,7 @@ mod tests {
 
     #[test]
     fn crear_respaldo_rechaza_ruta_vacia() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         assert!(matches!(
             repo().crear_respaldo(Path::new("")),
             Err(AppError::RespaldoPathInvalido)
@@ -153,7 +146,7 @@ mod tests {
 
     #[test]
     fn info_expone_la_ruta_de_la_base_datos() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let info = repo().info().unwrap();
         assert_eq!(
             info.ruta_base_datos,

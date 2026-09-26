@@ -3,9 +3,7 @@ use std::sync::Arc;
 use crate::domain::entities::{es_nocturno_ahora, margen_efectivo, Stock, StockPreview};
 use crate::domain::repositories::{NocturnoConfigRepository, StockRepository};
 use crate::infrastructure::error::AppError;
-use crate::infrastructure::repositories::{
-    SqliteNocturnoConfigRepository, SqliteStockRepository,
-};
+use crate::infrastructure::repositories::{SqliteNocturnoConfigRepository, SqliteStockRepository};
 
 pub struct StockService {
     repository: Arc<dyn StockRepository>,
@@ -173,18 +171,11 @@ mod tests {
     use crate::domain::repositories::{
         ArticuloRepository, CategoriaRepository, ProveedorRepository, SubCategoriaRepository,
     };
-    use crate::infrastructure::database::{reset_test_db, DB, TEST_LOCK};
+    use crate::infrastructure::database::{fresh_test_db, DB};
     use crate::infrastructure::repositories::{
         SqliteArticuloRepository, SqliteCategoriaRepository, SqliteProveedorRepository,
         SqliteSubCategoriaRepository,
     };
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn create_articulo() -> Articulo {
         let cat_repo = SqliteCategoriaRepository::new();
@@ -240,10 +231,12 @@ mod tests {
 
     #[test]
     fn delete_rejects_stock_with_sales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let service = StockService::new();
-        let stock = service.create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0).unwrap();
+        let stock = service
+            .create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0)
+            .unwrap();
 
         insert_venta_for_articulo(articulo.id);
 
@@ -254,10 +247,12 @@ mod tests {
 
     #[test]
     fn delete_allows_stock_without_sales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let articulo = create_articulo();
         let service = StockService::new();
-        let stock = service.create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0).unwrap();
+        let stock = service
+            .create(articulo.id, 10.0, 100.0, 25.0, 0.0, 0.0)
+            .unwrap();
 
         service.delete(stock.id).unwrap();
         assert!(matches!(
@@ -298,7 +293,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_rejects_zero() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         let err = service
             .apply_costo_percentage(0.0, None, None, None)
@@ -308,7 +303,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_rejects_below_minus_100() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         let err = service
             .apply_costo_percentage(-101.0, None, None, None)
@@ -318,7 +313,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_rejects_nan() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         let err = service
             .apply_costo_percentage(f64::NAN, None, None, None)
@@ -328,7 +323,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_rejects_infinity() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         let err = service
             .apply_costo_percentage(f64::INFINITY, None, None, None)
@@ -338,10 +333,12 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_increases_cost() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat Bulk", "Sub Bulk", "BULK1");
         let service = StockService::new();
-        let stock = service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
+        let stock = service
+            .create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0)
+            .unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -358,7 +355,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_no_filter_updates_all() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat All", "Sub All", "BALL1");
         let art2 = create_articulo_with_names("Cat All2", "Sub All2", "BALL2");
         let service = StockService::new();
@@ -387,7 +384,7 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_rejects_when_no_matches() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         let err = service
             .apply_costo_percentage(20.0, Some(99999), None, None)
@@ -397,7 +394,7 @@ mod tests {
 
     #[test]
     fn get_preview_rejects_invalid_porcentaje() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let service = StockService::new();
         assert!(matches!(
             service.get_preview(0.0, None, None, None),
@@ -407,10 +404,12 @@ mod tests {
 
     #[test]
     fn get_preview_returns_preview() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat Prev", "Sub Prev", "PREV1");
         let service = StockService::new();
-        service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
+        service
+            .create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0)
+            .unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -424,12 +423,16 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_with_category_filter() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art1 = create_articulo_with_names("Cat Filt", "Sub Filt", "FILT1");
         let art2 = create_articulo_with_names("Cat NoFilt", "Sub NoFilt", "FILT2");
         let service = StockService::new();
-        service.create(art1.id, 10.0, 1000.0, 20.0, 0.0, 0.0).unwrap();
-        service.create(art2.id, 5.0, 2000.0, 30.0, 0.0, 0.0).unwrap();
+        service
+            .create(art1.id, 10.0, 1000.0, 20.0, 0.0, 0.0)
+            .unwrap();
+        service
+            .create(art2.id, 5.0, 2000.0, 30.0, 0.0, 0.0)
+            .unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -443,10 +446,12 @@ mod tests {
 
     #[test]
     fn apply_costo_percentage_negative_reduces_cost() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let art = create_articulo_with_names("Cat Neg", "Sub Neg", "NEG1");
         let service = StockService::new();
-        let stock = service.create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0).unwrap();
+        let stock = service
+            .create(art.id, 10.0, 1000.0, 25.0, 0.0, 0.0)
+            .unwrap();
 
         let cat_repo = SqliteCategoriaRepository::new();
         let cats = cat_repo.find_all().unwrap();
@@ -480,7 +485,7 @@ mod tests {
 
     #[test]
     fn get_precio_venta_usa_ganancia_general_cuando_config_inactiva() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         set_nocturno_config(false, "00:00", "23:59");
         let stock = crear_stock_con_turnos();
         let service = StockService::new();
@@ -490,7 +495,7 @@ mod tests {
 
     #[test]
     fn get_precio_venta_usa_nocturna_cuando_activa_y_en_rango() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         set_nocturno_config(true, "00:00", "23:59");
         let stock = crear_stock_con_turnos();
         let service = StockService::new();
@@ -500,7 +505,7 @@ mod tests {
 
     #[test]
     fn get_precio_venta_usa_diurna_cuando_activa_fuera_de_rango() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         set_nocturno_config(true, "10:00", "10:00");
         let stock = crear_stock_con_turnos();
         let service = StockService::new();

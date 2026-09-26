@@ -113,11 +113,7 @@ pub fn update_sub_categoria(
         categoria_name(result.id_categoria)?
     );
     let detail = AuditDetail::new("sub_categoria", descripcion)
-        .cambio(
-            "sub_categoria",
-            &antes.sub_categoria,
-            &result.sub_categoria,
-        )
+        .cambio("sub_categoria", &antes.sub_categoria, &result.sub_categoria)
         .cambio(
             "categoria",
             categoria_name(antes.id_categoria)?,

@@ -58,14 +58,14 @@ impl VentaRepository for SqliteVentaRepository {
                 },
             );
 
-            let (stock_cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna) =
-                match stock {
-                    Ok(values) => values,
-                    Err(rusqlite::Error::QueryReturnedNoRows) => {
-                        return Err(AppError::ArticuloWithoutStock);
-                    }
-                    Err(e) => return Err(e.into()),
-                };
+            let (stock_cantidad, costo, ganancia, ganancia_diurna, ganancia_nocturna) = match stock
+            {
+                Ok(values) => values,
+                Err(rusqlite::Error::QueryReturnedNoRows) => {
+                    return Err(AppError::ArticuloWithoutStock);
+                }
+                Err(e) => return Err(e.into()),
+            };
 
             if !allow_negative_stock && detalle.cantidad > stock_cantidad {
                 return Err(AppError::InsufficientStock);
@@ -469,15 +469,8 @@ mod tests {
     use super::*;
     use crate::domain::entities::Cliente;
     use crate::domain::repositories::ClienteRepository;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::SqliteClienteRepository;
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     fn admin_user_id() -> i64 {
         let conn = DB.lock().unwrap();
@@ -518,7 +511,7 @@ mod tests {
 
     #[test]
     fn create_persists_cliente_id_and_name() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cliente = create_cliente("Ana", "López");
 
         let created = venta_con_detalle(cliente.id);
@@ -536,7 +529,7 @@ mod tests {
 
     #[test]
     fn create_with_default_client_returns_consumidor_final() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let default_id: i64 = {
             let conn = DB.lock().unwrap();
             conn.query_row(
@@ -554,7 +547,7 @@ mod tests {
 
     #[test]
     fn find_by_cliente_returns_only_that_clients_sales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let cliente_a = create_cliente("Ana", "López");
         let cliente_b = create_cliente("Bruno", "Gómez");
 
@@ -594,12 +587,17 @@ mod tests {
 
     #[test]
     fn create_aplica_margen_nocturno_cuando_activo_y_en_rango() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         configurar_nocturno(true, "00:00", "23:59");
         let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
-        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        let mut venta = Venta::new(
+            admin_user_id(),
+            "2026-01-01T00:00:00Z".to_string(),
+            0.0,
+            None,
+        );
         venta.cliente_id = cliente.id;
         let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
@@ -613,12 +611,17 @@ mod tests {
 
     #[test]
     fn create_aplica_margen_diurno_fuera_del_rango_nocturno() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         configurar_nocturno(true, "10:00", "10:00");
         let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
-        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        let mut venta = Venta::new(
+            admin_user_id(),
+            "2026-01-01T00:00:00Z".to_string(),
+            0.0,
+            None,
+        );
         venta.cliente_id = cliente.id;
         let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
@@ -632,12 +635,17 @@ mod tests {
 
     #[test]
     fn create_usa_precio_cliente_cuando_config_inactiva() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         configurar_nocturno(false, "00:00", "23:59");
         let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
-        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        let mut venta = Venta::new(
+            admin_user_id(),
+            "2026-01-01T00:00:00Z".to_string(),
+            0.0,
+            None,
+        );
         venta.cliente_id = cliente.id;
         let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
@@ -651,12 +659,17 @@ mod tests {
 
     #[test]
     fn create_aplica_diurno_cuando_rango_inicio_fin_iguales() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         configurar_nocturno(true, "10:00", "10:00");
         let id_articulo = preparar_stock(100.0, 20.0, 10.0, 0.0);
         let cliente = create_cliente("Ana", "López");
 
-        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 0.0, None);
+        let mut venta = Venta::new(
+            admin_user_id(),
+            "2026-01-01T00:00:00Z".to_string(),
+            0.0,
+            None,
+        );
         venta.cliente_id = cliente.id;
         let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 
@@ -669,12 +682,17 @@ mod tests {
 
     #[test]
     fn create_aplica_margen_sobre_costo_con_descuento() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         configurar_nocturno(true, "00:00", "23:59");
         let id_articulo = preparar_stock(100.0, 20.0, 10.0, 30.0);
         let cliente = create_cliente("Ana", "López");
 
-        let mut venta = Venta::new(admin_user_id(), "2026-01-01T00:00:00Z".to_string(), 10.0, None);
+        let mut venta = Venta::new(
+            admin_user_id(),
+            "2026-01-01T00:00:00Z".to_string(),
+            10.0,
+            None,
+        );
         venta.cliente_id = cliente.id;
         let detalle = VentaDetalle::new(id_articulo, 1.0, 0.0, 100.0);
 

@@ -1,6 +1,8 @@
 use once_cell::sync::Lazy;
 use rusqlite::Connection;
 use std::sync::Mutex;
+#[cfg(test)]
+use std::sync::{MutexGuard, PoisonError};
 
 use super::config::get_db_path;
 use super::maintenance;
@@ -45,12 +47,28 @@ fn initialize(conn: &Connection) -> Result<(), rusqlite::Error> {
     Ok(())
 }
 
+/// Serializes the tests that share the in-memory database.
+///
+/// Poisoning is deliberately ignored: this lock only guards test isolation,
+/// not an invariant, and `fresh_test_db` rebuilds the schema right after
+/// acquiring it. Recovering keeps a single failing test from cascading into
+/// every other DB test with a `PoisonError` that hides the real failure.
 #[cfg(test)]
-pub static TEST_LOCK: Mutex<()> = Mutex::new(());
+static TEST_LOCK: Mutex<()> = Mutex::new(());
+
+/// Serializes a DB test and rebuilds the schema before it runs.
+///
+/// Hold the returned guard for the whole test to keep the database private.
+#[cfg(test)]
+pub fn fresh_test_db() -> MutexGuard<'static, ()> {
+    let guard = TEST_LOCK.lock().unwrap_or_else(PoisonError::into_inner);
+    reset_test_db().expect("failed to rebuild the test database");
+    guard
+}
 
 #[cfg(test)]
 pub fn reset_test_db() -> Result<(), rusqlite::Error> {
-    let conn = DB.lock().expect("test database lock");
+    let conn = DB.lock().unwrap_or_else(PoisonError::into_inner);
     drop_all_tables(&conn)?;
     initialize(&conn)?;
     Ok(())

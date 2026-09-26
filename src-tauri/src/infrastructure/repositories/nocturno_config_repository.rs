@@ -59,18 +59,11 @@ impl NocturnoConfigRepository for SqliteNocturnoConfigRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
+    use crate::infrastructure::database::fresh_test_db;
 
     #[test]
     fn get_config_returns_defaults_when_seeded() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteNocturnoConfigRepository::new();
 
         let config = repo.get_config().unwrap();
@@ -81,7 +74,7 @@ mod tests {
 
     #[test]
     fn save_config_persists_and_get_returns_it() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteNocturnoConfigRepository::new();
 
         let config = NocturnoConfig {
@@ -99,9 +92,7 @@ mod tests {
         let count: i64 = DB
             .lock()
             .unwrap()
-            .query_row("SELECT COUNT(*) FROM nocturno_config", [], |row| {
-                row.get(0)
-            })
+            .query_row("SELECT COUNT(*) FROM nocturno_config", [], |row| row.get(0))
             .unwrap();
         assert_eq!(count, 1);
     }

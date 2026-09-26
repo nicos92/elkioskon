@@ -122,19 +122,12 @@ mod tests {
     use super::*;
     use crate::domain::entities::SubCategoria;
     use crate::domain::repositories::SubCategoriaRepository;
-    use crate::infrastructure::database::{reset_test_db, TEST_LOCK};
+    use crate::infrastructure::database::fresh_test_db;
     use crate::infrastructure::repositories::SqliteSubCategoriaRepository;
-    use std::sync::MutexGuard;
-
-    fn fresh_db() -> MutexGuard<'static, ()> {
-        let guard = TEST_LOCK.lock().unwrap();
-        reset_test_db().unwrap();
-        guard
-    }
 
     #[test]
     fn create_assigns_id_and_find_by_id_round_trip() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCategoriaRepository::new();
 
         let created = repo
@@ -148,7 +141,7 @@ mod tests {
 
     #[test]
     fn find_by_name_and_duplicate_maps_duplicate_value() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCategoriaRepository::new();
 
         repo.create(&Categoria::new("Bebidas Test".to_string()))
@@ -165,7 +158,7 @@ mod tests {
 
     #[test]
     fn find_all_and_update() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCategoriaRepository::new();
 
         let mut created = repo.create(&Categoria::new("Cat A".to_string())).unwrap();
@@ -179,7 +172,7 @@ mod tests {
 
     #[test]
     fn delete_removes_categoria() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCategoriaRepository::new();
 
         let created = repo.create(&Categoria::new("Cat X".to_string())).unwrap();
@@ -189,7 +182,7 @@ mod tests {
 
     #[test]
     fn delete_categoria_with_sub_categorias_maps_foreign_key() {
-        let _guard = fresh_db();
+        let _guard = fresh_test_db();
         let repo = SqliteCategoriaRepository::new();
 
         let created = repo.create(&Categoria::new("Cat Y".to_string())).unwrap();
