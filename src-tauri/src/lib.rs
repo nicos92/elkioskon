@@ -1,5 +1,7 @@
 pub mod api;
 pub mod application;
+#[cfg(test)]
+mod docs_consistency;
 pub mod domain;
 pub mod infrastructure;
 
