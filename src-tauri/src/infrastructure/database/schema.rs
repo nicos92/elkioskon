@@ -1,6 +1,10 @@
 use rusqlite::Connection;
 
-#[cfg(test)]
+/// The canonical list of application tables.
+///
+/// Production code uses it to validate that a candidate backup actually
+/// carries the app schema before restoring it over the live database; tests
+/// use it to cross-check the DDL and the documented count in AGENTS.md.
 pub(crate) const TABLES: &[&str] = &[
     "cost_update_items",
     "cost_update_operations",

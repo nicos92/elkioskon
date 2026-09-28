@@ -40,7 +40,7 @@ pub use presupuesto::{
     PresupuestoWithDetalle,
 };
 pub use proveedor::{Proveedor, DEFAULT_PROVEEDOR_NOMBRE};
-pub use respaldo::{RespaldoInfo, RespaldoResult};
+pub use respaldo::{RespaldoInfo, RespaldoResult, RestauracionResult};
 pub use stock::Stock;
 pub use stock_preview::StockPreview;
 pub use sub_categoria::SubCategoria;

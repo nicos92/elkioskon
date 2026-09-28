@@ -2,14 +2,16 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { getVersion } from "@tauri-apps/api/app";
-import { save } from "@tauri-apps/plugin-dialog";
+import { save, open } from "@tauri-apps/plugin-dialog";
 
 import { useAuthStore, useRespaldoStore } from "../stores";
 import { useNocturnoStore } from "../stores/nocturnoStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useToasts } from "../composables/useToasts";
+import { useConfirm } from "../composables/useConfirm";
 import { usePermissions } from "../composables/usePermissions";
 import { formatBytes } from "../utils/format";
+import { guardarRutaRespaldoPrevio } from "../utils/restauracion";
 
 const router = useRouter();
 
@@ -18,6 +20,7 @@ const themeStore = useThemeStore();
 const nocturnoStore = useNocturnoStore();
 const respaldoStore = useRespaldoStore();
 const { success: toastSuccess, error: toastError } = useToasts();
+const { confirm } = useConfirm();
 const { canConfigurarRecargoNocturno, canGestionarRespaldos } = usePermissions();
 
 const appVersion = ref("");
@@ -96,6 +99,10 @@ const nocturnoFin = ref("06:00");
 const nocturnoSaving = ref(false);
 const nocturnoError = ref<string | null>(null);
 
+// El store tiene un único `isLoading` para las dos operaciones, así que el
+// botón que hay que mostrar como en progreso se lleva aparte.
+const respaldoPendiente = ref<"crear" | "restaurar" | null>(null);
+
 const theme = computed({
     get: () => themeStore.mode,
     set: (value) => themeStore.setMode(value),
@@ -155,6 +162,7 @@ async function handleRespaldo() {
             return;
         }
 
+        respaldoPendiente.value = "crear";
         const ok = await respaldoStore.crearRespaldo(destino);
         if (ok) {
             await respaldoStore.fetchInfo();
@@ -167,7 +175,70 @@ async function handleRespaldo() {
         }
     } catch {
         toastError("No se pudo generar la copia de seguridad.");
+    } finally {
+        respaldoPendiente.value = null;
     }
+}
+
+async function handleRestaurar() {
+    let seleccion: string | string[] | null;
+    try {
+        seleccion = await open({
+            title: "Seleccionar copia de seguridad",
+            multiple: false,
+            directory: false,
+            filters: [
+                { name: "Base de datos SQLite", extensions: ["db", "sqlite"] },
+            ],
+        });
+    } catch {
+        toastError("No se pudo abrir el selector de archivos.");
+        return;
+    }
+    if (!seleccion) {
+        return;
+    }
+    const origen = Array.isArray(seleccion) ? seleccion[0] : seleccion;
+
+    const confirmado = await confirm({
+        title: "Restaurar copia de seguridad",
+        message: `Se reemplazarán todos los datos actuales por los de ${origen}. Antes de hacerlo se guarda una copia automática de los datos actuales en la carpeta de esa copia, por si necesitás volver atrás.`,
+        confirmText: "Restaurar",
+        variant: "danger",
+    });
+    if (!confirmado) {
+        return;
+    }
+
+    respaldoPendiente.value = "restaurar";
+    let restaurado: boolean;
+    try {
+        restaurado = await respaldoStore.restaurarRespaldo(origen);
+    } finally {
+        respaldoPendiente.value = null;
+    }
+    if (!restaurado) {
+        toastError(
+            respaldoStore.error ||
+                "No se pudo restaurar la copia de seguridad.",
+        );
+        return;
+    }
+
+    // La ruta real la devuelve el backend y no siempre es la carpeta elegida
+    // (si no admitía escritura, la copia previa se hizo junto a la base), así
+    // que se muestra la que se obtuvo y no la que se pidió.
+    const rutaPrevia =
+        respaldoStore.ultimaRestauracion?.ruta_respaldo_previo ?? null;
+    guardarRutaRespaldoPrevio(rutaPrevia);
+    if (rutaPrevia) {
+        toastSuccess(`Copia restaurada. Tus datos anteriores quedaron en: ${rutaPrevia}`);
+    }
+
+    // La copia restaurada puede no tener el usuario con el que se entró ni
+    // sus permisos, así que la sesión se da por terminada.
+    authStore.logout();
+    router.push({ name: "login", query: { restaurado: "1" } });
 }
 </script>
 
@@ -315,14 +386,39 @@ async function handleRespaldo() {
                     type="button"
                     @click="handleRespaldo"
                     class="btn-primary"
-                    :disabled="respaldoStore.isLoading"
+                    :disabled="respaldoPendiente !== null"
                 >
                     {{
-                        respaldoStore.isLoading
+                        respaldoPendiente === "crear"
                             ? "Generando..."
                             : "Generar copia de seguridad"
                     }}
                 </button>
+            </div>
+            <div class="respaldo-restore">
+                <p class="setting-hint">
+                    También podés volver atrás en el tiempo restaurando una
+                    copia anterior. Se reemplazan todos los datos actuales
+                    (artículos, stock, ventas, clientes, usuarios y
+                    configuración), así que antes de hacerlo se guarda una
+                    copia automática de los datos de ahora, en la misma carpeta
+                    que la base de datos. Al terminar vas a tener que volver a
+                    iniciar sesión con los datos que quedaron en la copia.
+                </p>
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        @click="handleRestaurar"
+                        class="btn-danger-outline"
+                        :disabled="respaldoPendiente !== null"
+                    >
+                        {{
+                            respaldoPendiente === "restaurar"
+                                ? "Restaurando..."
+                                : "Restaurar copia de seguridad"
+                        }}
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -491,6 +587,35 @@ h1 {
 }
 
 .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.respaldo-restore {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.respaldo-restore .setting-hint {
+    margin: 0.5rem 0 0;
+}
+
+.btn-danger-outline {
+    background: transparent;
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-danger-outline:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }

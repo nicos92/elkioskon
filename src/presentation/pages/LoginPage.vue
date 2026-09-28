@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../stores";
+import { leerRutaRespaldoPrevio } from "../utils/restauracion";
 
 const router = useRouter();
 const route = useRoute();
@@ -13,6 +14,10 @@ const isLoading = ref(false);
 const dbReady = ref(false);
 
 const passwordChanged = computed(() => route.query.passwordChanged === "1");
+const restaurado = computed(() => route.query.restaurado === "1");
+// Se lee una sola vez al entrar: el login se puede recargar sin perder el aviso
+// de que se restauró una copia, pero la ruta ya se mostró en el aviso anterior.
+const respaldoPrevio = ref<string | null>(leerRutaRespaldoPrevio());
 
 onMounted(async () => {
     try {
@@ -46,6 +51,17 @@ async function handleLogin() {
 
                     <div v-if="passwordChanged" class="success-message">
                         Contraseña cambiada correctamente. Vuelva a ingresar.
+                    </div>
+
+                    <div v-if="restaurado" class="success-message">
+                        Copia de seguridad restaurada. Ingrese con las
+                        credenciales que quedaron en la copia.
+                        <template v-if="respaldoPrevio">
+                            <br />
+                            Sus datos anteriores quedaron en
+                            <span class="ruta-previa">{{ respaldoPrevio }}</span
+                            >.
+                        </template>
                     </div>
 
                     <form @submit.prevent="handleLogin">
@@ -215,6 +231,17 @@ button:disabled {
     background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
     border-radius: 6px;
     text-align: center;
+}
+
+/* La ruta se muestra como bloque y no centrada: es larga, tiene que partir
+   sin empujar la tarjeta y se lee mejor alineada al margen. */
+.ruta-previa {
+    display: block;
+    margin-top: 0.5rem;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.8rem;
+    text-align: left;
+    overflow-wrap: anywhere;
 }
 
 .fade-slide-enter-active {

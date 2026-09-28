@@ -44,8 +44,8 @@ src-tauri/src/
 | Módulo | Responsabilidad |
 | ------ | --------------- |
 | `config.rs` | `get_db_path()` y `BCRYPT_COST` (10 normal, 4 en test) |
-| `connection.rs` | `DB: Lazy<Mutex<Connection>>`, `init_database()`, helpers de test |
-| `schema.rs` | `SCHEMA_SQL` (DDL completo) y `TABLES` (lista de tablas, `#[cfg(test)]`) |
+| `connection.rs` | `DB: Lazy<Mutex<Connection>>`, `init_database()`, `initialize(conn)` (esquema+migraciones+seeds sobre una conexión ya abierta, la usa el restore), helpers de test |
+| `schema.rs` | `SCHEMA_SQL` (DDL completo) y `TABLES` (lista de tablas, usada por el restore y por los tests) |
 | `migrations.rs` | Migraciones idempotentes para bases preexistentes |
 | `maintenance.rs` | `purge_old_audit_logs()` — borra `audit_logs` con más de 90 días |
 | `seeds/` | `admin`, `cliente`, `demo_data`, `nocturno_config`, `permissions`, `proveedor`, `tipos_venta` |
@@ -302,7 +302,8 @@ const result = await invoke<UserResponse>("create_user", {
 - Definir tipos TypeScript que correspondan a las structs de Rust
 - Usar `serde` derive macros en Rust: `#[derive(Serialize, Deserialize)]`
 - Los errores se serializan como string: `AppError` implementa `serde::Serialize` y llega a `invoke` como rechazo de la promesa
-- Los tipos snake_case en Rust viajan como camelCase al frontend: `user_id` → `userId`. Recordarlo al escribir los tipos TS
+- **Los argumentos de `invoke` se pasan en camelCase**, porque Tauri los convierte al snake_case del parámetro Rust: `user_id` → `{ userId: 1 }`.
+- **Los campos de los structs serializados NO se convierten**: ningún entity del proyecto lleva `#[serde(rename_all = "camelCase")]`, así que viajan tal cual y las interfaces TS los declaran en snake_case (`user_id`, `ruta_respaldo_previo`, `id_sub_categoria`). No aplicar la regla anterior a los campos de una respuesta.
 
 ---
 
@@ -340,7 +341,26 @@ Al crear el esquema se siembran datos por defecto. **El documento anterior decí
 
 ### Tablas
 
-21 tablas en total. DDL canónico en `infrastructure/database/schema.rs` (`SCHEMA_SQL`); la constante `TABLES` lo refleja y un test verifica que ambas cosas coincidan.
+21 tablas en total. DDL canónico en `infrastructure/database/schema.rs` (`SCHEMA_SQL`); la constante `TABLES` lo refleja y un test verifica que ambas cosas coincidan. `TABLES` no es solo de test: el restore la usa para confirmar que la copia elegida trae el esquema completo antes de tocar los datos actuales.
+
+### Respaldos (`crear_respaldo` / `restaurar_respaldo`)
+
+Ambos comandos viven en `api/commands/respaldo_commands.rs` sobre `RespaldoService` + `SqliteRespaldoRepository`. `crear` usa `VACUUM INTO`; `restaurar` **no reemplaza el archivo**.
+
+> **Por qué el restore no copia el archivo**: `DB` es un `Lazy<Mutex<Connection>>` con el único handle abierto de la base. Reemplazar el archivo en disco no haría nada en Unix (el handle sigue escribiendo en el inode viejo) y sería rechazado en Windows (SQLite tiene el archivo tomado). Los datos viajan, entonces, a través de la conexión viva: `ATTACH` de la copia, `PRAGMA foreign_keys = OFF`, `DROP TABLE` de todas las tablas de `main`, recreación del DDL desde el `sqlite_master` del origen e `INSERT INTO main.t SELECT * FROM orig.t`, todo en una transacción. Después se corre `initialize(&conn)` para que una copia de una build vieja quede migrada.
+
+Reglas que sostienen esa implementación:
+
+- **Validar antes de tocar.** `leer_esquema_del_origen` abre la copia en read-only, corre `PRAGMA integrity_check` y exige las 21 tablas de `TABLES` **antes** del `VACUUM INTO` de seguridad. Un archivo inválido deja la base actual exactamente como estaba.
+- **Copia de seguridad previa.** Antes del swap se hace `VACUUM INTO` de los datos actuales a `<nombre-base>.pre-restauracion-<sello>.<ext>`, y la ruta se devuelve en `RestauracionResult.ruta_respaldo_previo` para poder deshacer a mano y para que el frontend la muestre. Es `None` si la base no está en un archivo (en tests es `:memory:`).
+  - **La carpeta es la de la copia restaurada, no la de la base viva.** El nombre sale de la base viva para que la copia se lea como "datos de la app" y no se mezcle con los respaldos fechados que la rodean, pero la carpeta es `origen.parent()`: es donde está mirando quien pidió el restore, así que la copia previa queda a la vista en lugar de enterrada en los datos del sistema.
+  - **Si esa carpeta no admite escritura, hay fallback.** La carpeta la elige el usuario (un pendrive de solo lectura, un DVD, un mount de red, sin espacio), así que `copiar_datos_actuales` reintenta en la carpeta de la base viva, que la app siempre puede escribir. Un restore nunca se bloquea por una carpeta que la app no creó. Si fallan las dos, se aborta con `RestaurarRespaldoError` **sin** tocar los datos: sin copia de seguridad no hay red de contención.
+  - El primer error se descarta a propósito cuando el fallback funciona: la causa raíz ya no importa una vez que la copia quedó escrita.
+  - El frontend muestra en el diálogo la ruta de la copia elegida y en el login la ruta **real** que devolvió el backend, que puede ser la del fallback. Va por `sessionStorage` (`presentation/utils/restauracion.ts`) porque el restore cierra la sesión y una ruta metida en el query string es frágil de decodificar.
+- **Solo tablas.** `orig.sqlite_master` devuelve tablas, índices, vistas y triggers, pero solo las tablas se copian con `INSERT`; el resto va únicamente como DDL. Mezclarlos produce `no such table: main.<índice>`.
+- **Sin lock anidado.** El comando valida el permiso con `check_permission` y audita con `log_audit`, y los dos toman el mutex global. El swap tiene que soltarlo antes; `std::sync::Mutex` no es reentrante y el proceso se cuelga.
+- **El permiso se chequea contra los datos previos** y el asiento de auditoría se escribe **después**, en la base restaurada, para que el restore quede en el historial nuevo.
+- El restore deja la sesión inservible (el usuario logueado puede no existir en la copia), así que el frontend hace `logout()` y manda a `/login`.
 
 ### Usuarios
 
@@ -568,7 +588,7 @@ Reglas:
 
 ## 8. API Commands (Tauri)
 
-74 comandos registrados en `tauri::generate_handler!` en `src-tauri/src/lib.rs`. **Esa lista es la fuente de verdad**: si agregás un comando, agregalo también acá o el test `docs_consistency` falla.
+75 comandos registrados en `tauri::generate_handler!` en `src-tauri/src/lib.rs`. **Esa lista es la fuente de verdad**: si agregás un comando, agregalo también acá o el test `docs_consistency` falla.
 
 ### Base y home
 
@@ -718,6 +738,7 @@ Reglas:
 | Command | Descripción |
 | --------- | ------------- |
 | `crear_respaldo` | Copiar la DB a la ruta elegida por el usuario vía `VACUUM INTO` (permiso `gestionar_respaldos`) |
+| `restaurar_respaldo` | Reemplazar todos los datos por los de una copia elegida (permiso `gestionar_respaldos`) |
 | `get_respaldo_info` | Tamaño y ruta del archivo de base de datos actual |
 
 ### Presupuestos

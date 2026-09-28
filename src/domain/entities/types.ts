@@ -513,3 +513,13 @@ export interface RespaldoInfo {
   ruta_base_datos: string;
   tamano_base_datos_bytes: number;
 }
+
+export interface RestauracionResult {
+  ruta_origen: string;
+  tablas_restauradas: number;
+  registros_restaurados: number;
+  /** Copia de seguridad de los datos que fueron reemplazados, para deshacer
+   * a mano. `null` si la base no estaba en un archivo. */
+  ruta_respaldo_previo: string | null;
+  restaurado_en: string;
+}

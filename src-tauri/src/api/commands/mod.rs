@@ -60,7 +60,9 @@ pub use proveedor_commands::{
     create_proveedor, delete_proveedor, get_all_proveedores, get_proveedor_by_id, update_proveedor,
     ProveedorAppState,
 };
-pub use respaldo_commands::{crear_respaldo, get_respaldo_info, RespaldoAppState};
+pub use respaldo_commands::{
+    crear_respaldo, get_respaldo_info, restaurar_respaldo, RespaldoAppState,
+};
 pub use stock_commands::{
     create_stock, delete_stock, get_all_stock, get_precio_venta, get_stock_by_articulo,
     get_stock_by_id, update_stock, StockAppState,

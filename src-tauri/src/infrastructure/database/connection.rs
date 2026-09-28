@@ -22,7 +22,11 @@ pub fn init_database() -> Result<Connection, rusqlite::Error> {
     Ok(conn)
 }
 
-fn initialize(conn: &Connection) -> Result<(), rusqlite::Error> {
+/// Applies the schema, migrations and seeds to an open connection.
+///
+/// Runs on every startup and also after a backup is restored, so a backup
+/// taken by an older build is brought up to the current schema.
+pub(crate) fn initialize(conn: &Connection) -> Result<(), rusqlite::Error> {
     schema::apply_schema(conn)?;
 
     migrations::backfill_stock_updated_at(conn)?;

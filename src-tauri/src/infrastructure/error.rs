@@ -191,6 +191,12 @@ pub enum AppError {
 
     #[error("No se pudo generar la copia de seguridad: {0}")]
     RespaldoError(String),
+
+    #[error("El archivo seleccionado no es una copia de seguridad válida: {0}")]
+    RespaldoInvalido(String),
+
+    #[error("No se pudo restaurar la copia de seguridad: {0}")]
+    RestaurarRespaldoError(String),
 }
 
 impl From<rusqlite::Error> for AppError {
@@ -282,6 +288,8 @@ impl AppError {
             AppError::CostUpdateModifiedAfter(_) => "cost_update_modified_after",
             AppError::RespaldoPathInvalido => "respaldo_path_invalido",
             AppError::RespaldoError(_) => "respaldo_error",
+            AppError::RespaldoInvalido(_) => "respaldo_invalido",
+            AppError::RestaurarRespaldoError(_) => "restaurar_respaldo_error",
         }
     }
 
@@ -424,6 +432,15 @@ impl AppError {
             }
             AppError::RespaldoError(detalle) => {
                 format!("No se pudo generar la copia de seguridad: {}", detalle)
+            }
+            AppError::RespaldoInvalido(detalle) => {
+                format!(
+                    "El archivo seleccionado no es una copia de seguridad válida: {}",
+                    detalle
+                )
+            }
+            AppError::RestaurarRespaldoError(detalle) => {
+                format!("No se pudo restaurar la copia de seguridad: {}", detalle)
             }
         }
     }
