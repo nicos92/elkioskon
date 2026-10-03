@@ -54,7 +54,10 @@ impl VentaService {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    // El request de Tauri deserializa estos campos uno a uno; agruparlos en una
+    // struct de entrada cambiaría el contrato con el frontend sin ganar nada.
+    // `expect` y no `allow` para que el aviso aparezca si el lint deja de aplicar.
+    #[expect(clippy::too_many_arguments)]
     pub fn create(
         &self,
         user_id: i64,

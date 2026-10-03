@@ -116,7 +116,7 @@ impl CostUpdateRepository for SqliteCostUpdateRepository {
                 .map(|id| Box::new(*id) as Box<dyn rusqlite::types::ToSql>)
                 .collect();
             params_vec.push(Box::new(porcentaje));
-            params_vec.push(Box::new(now.clone()));
+            params_vec.push(Box::new(now));
 
             let param_refs: Vec<&dyn rusqlite::types::ToSql> =
                 params_vec.iter().map(|p| p.as_ref()).collect();

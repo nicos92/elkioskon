@@ -155,11 +155,9 @@ impl UserRepository for SqliteUserRepository {
                 id: row.get(0)?,
                 permission: row.get(1)?,
                 created: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now()),
+                    .map_or_else(|_| Utc::now(), |dt| dt.with_timezone(&Utc)),
                 assigned_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(3)?)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now()),
+                    .map_or_else(|_| Utc::now(), |dt| dt.with_timezone(&Utc)),
             });
         }
 
@@ -179,8 +177,7 @@ impl UserRepository for SqliteUserRepository {
                 id: row.get(0)?,
                 permission: row.get(1)?,
                 created: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .unwrap_or_else(|_| Utc::now()),
+                    .map_or_else(|_| Utc::now(), |dt| dt.with_timezone(&Utc)),
             });
         }
 
@@ -245,11 +242,9 @@ impl SqliteUserRepository {
             password: row.get(2)?,
             active: row.get::<_, i32>(3)? != 0,
             created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                .map(|dt| dt.with_timezone(&Utc))
-                .unwrap_or_else(|_| Utc::now()),
+                .map_or_else(|_| Utc::now(), |dt| dt.with_timezone(&Utc)),
             modified_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                .map(|dt| dt.with_timezone(&Utc))
-                .unwrap_or_else(|_| Utc::now()),
+                .map_or_else(|_| Utc::now(), |dt| dt.with_timezone(&Utc)),
         })
     }
 }

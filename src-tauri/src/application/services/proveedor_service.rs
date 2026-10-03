@@ -77,12 +77,12 @@ impl ProveedorService {
             }
         }
 
-        existing.proveedor = proveedor.proveedor.clone();
-        existing.nombre = proveedor.nombre.clone();
-        existing.cuit = proveedor.cuit.clone();
-        existing.tel = proveedor.tel.clone();
-        existing.email = proveedor.email.clone();
-        existing.observacion = proveedor.observacion.clone();
+        existing.proveedor.clone_from(&proveedor.proveedor);
+        existing.nombre.clone_from(&proveedor.nombre);
+        existing.cuit.clone_from(&proveedor.cuit);
+        existing.tel.clone_from(&proveedor.tel);
+        existing.email.clone_from(&proveedor.email);
+        existing.observacion.clone_from(&proveedor.observacion);
 
         self.repository.update(&existing)
     }

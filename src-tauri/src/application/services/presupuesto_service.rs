@@ -54,7 +54,6 @@ impl PresupuestoService {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn create(
         &self,
         user_id: i64,

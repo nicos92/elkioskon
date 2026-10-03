@@ -1,6 +1,5 @@
-use once_cell::sync::Lazy;
 use rusqlite::Connection;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 #[cfg(test)]
 use std::sync::{MutexGuard, PoisonError};
 
@@ -10,7 +9,7 @@ use super::migrations;
 use super::schema;
 use super::seeds;
 
-pub static DB: Lazy<Mutex<Connection>> = Lazy::new(|| {
+pub static DB: LazyLock<Mutex<Connection>> = LazyLock::new(|| {
     let conn = init_database().expect("Failed to initialize database");
     Mutex::new(conn)
 });

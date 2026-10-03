@@ -78,7 +78,7 @@ impl UserService {
             .ok_or(AppError::UserNotFound)?;
 
         let existing = self.repository.find_by_username(&username)?;
-        if existing.is_some() && existing.unwrap().id != id {
+        if existing.as_ref().is_some_and(|otro| otro.id != id) {
             return Err(AppError::UsernameExists);
         }
 
@@ -116,7 +116,8 @@ impl UserService {
         let hashed_password =
             hash(&new_password, BCRYPT_COST).map_err(|e| AppError::Hashing(e.to_string()))?;
 
-        let mut updated = target.clone();
+        // `target` no se usa después de acá, así que se mueve en vez de copiarse.
+        let mut updated = target;
         updated.password = hashed_password;
         updated.modified_at = Utc::now();
 
