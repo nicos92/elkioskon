@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use chrono::{Datelike, Local, NaiveDate, TimeZone};
+use chrono::{Datelike, Local, NaiveDate};
 
+use super::rango_local::rango_utc_del_dia_local;
 use crate::domain::entities::{Cierre, CierreTipo, CierreWithTipos};
 use crate::domain::repositories::{CierreRepository, Page};
 use crate::infrastructure::error::AppError;
@@ -34,12 +35,7 @@ impl CierreService {
             return Err(AppError::CierreFechaFutura);
         }
 
-        let start = local_to_utc(&day.and_hms_opt(0, 0, 0).unwrap());
-        let end = local_to_utc(
-            &(day + chrono::Duration::days(1))
-                .and_hms_opt(0, 0, 0)
-                .unwrap(),
-        );
+        let (start, end) = rango_utc_del_dia_local(day)?;
 
         let mut conn = crate::infrastructure::database::DB
             .lock()
@@ -140,16 +136,6 @@ impl CierreService {
     pub fn get_page(&self, limit: i64, offset: i64) -> Result<Page<CierreWithTipos>, AppError> {
         self.repository.find_page(limit, offset)
     }
-}
-
-fn local_to_utc(dt: &chrono::NaiveDateTime) -> String {
-    Local
-        .from_local_datetime(dt)
-        .earliest()
-        .or_else(|| Local.from_local_datetime(dt).latest())
-        .unwrap()
-        .with_timezone(&chrono::Utc)
-        .to_rfc3339()
 }
 
 fn round2(value: f64) -> f64 {

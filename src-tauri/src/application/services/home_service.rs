@@ -1,5 +1,6 @@
-use chrono::TimeZone;
+use chrono::Local;
 
+use super::rango_local::rango_utc_del_dia_local;
 use crate::domain::entities::{CategoriaConSub, HomeStats, StockBajoItem, SubCategoriaInfo};
 use crate::infrastructure::error::AppError;
 
@@ -44,7 +45,7 @@ impl HomeService {
         let total_sub_categorias: i64 =
             conn.query_row("SELECT COUNT(*) FROM sub_categorias", [], |row| row.get(0))?;
 
-        let (inicio_hoy, inicio_manana) = hoy_utc_range();
+        let (inicio_hoy, inicio_manana) = rango_utc_del_dia_local(Local::now().date_naive())?;
         let (ventas_hoy, total_ventas_hoy): (i64, f64) = conn.query_row(
             "SELECT COUNT(*), COALESCE(SUM(total), 0)
              FROM ventas
@@ -129,25 +130,4 @@ impl HomeService {
             categorias,
         })
     }
-}
-
-fn hoy_utc_range() -> (String, String) {
-    let hoy = chrono::Local::now().date_naive();
-    let inicio = local_to_utc(&hoy.and_hms_opt(0, 0, 0).unwrap());
-    let fin = local_to_utc(
-        &(hoy + chrono::Duration::days(1))
-            .and_hms_opt(0, 0, 0)
-            .unwrap(),
-    );
-    (inicio, fin)
-}
-
-fn local_to_utc(dt: &chrono::NaiveDateTime) -> String {
-    chrono::Local
-        .from_local_datetime(dt)
-        .earliest()
-        .or_else(|| chrono::Local.from_local_datetime(dt).latest())
-        .unwrap()
-        .with_timezone(&chrono::Utc)
-        .to_rfc3339()
 }
