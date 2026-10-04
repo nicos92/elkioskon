@@ -1,14 +1,6 @@
 use std::sync::Mutex;
-use tauri::State;
 
-use rusqlite::params;
-
-use crate::api::commands::permissions::check_permission;
-use crate::application::services::{log_audit, AuditDetail, UserService};
-use crate::domain::entities::{
-    AuditAction, AuditScreen, Permission, PermissionCode, User, UserPermission,
-};
-use crate::infrastructure::database::DB;
+use crate::application::services::UserService;
 use crate::infrastructure::error::AppError;
 
 pub mod articulo_commands;
@@ -20,6 +12,7 @@ pub mod cost_update_commands;
 pub mod dollar_commands;
 pub mod home_commands;
 pub mod nocturno_commands;
+pub mod permission_commands;
 pub mod permissions;
 pub mod presupuesto_commands;
 pub mod proveedor_commands;
@@ -27,6 +20,7 @@ pub mod respaldo_commands;
 pub mod stock_commands;
 pub mod sub_categoria_commands;
 pub mod tipo_venta_commands;
+pub mod user_commands;
 pub mod venta_commands;
 
 pub use articulo_commands::{
@@ -52,6 +46,10 @@ pub use dollar_commands::{
 };
 pub use home_commands::{get_home_stats, HomeStatsAppState};
 pub use nocturno_commands::{get_nocturno_config, save_nocturno_config, NocturnoConfigAppState};
+pub use permission_commands::{
+    add_permission_to_user, create_permission, get_all_permissions, get_user_permissions,
+    remove_permission_from_user, AddPermissionRequest,
+};
 pub use presupuesto_commands::{
     cambiar_estado_presupuesto, crear_presupuesto, get_all_presupuestos, get_presupuesto_by_id,
     PresupuestoAppState,
@@ -73,6 +71,11 @@ pub use sub_categoria_commands::{
 };
 pub use tipo_venta_commands::{
     create_tipo_venta, delete_tipo_venta, get_all_tipos_venta, update_tipo_venta, TipoVentaAppState,
+};
+pub use user_commands::{
+    change_password, create_user, delete_user, get_all_users, login, update_user,
+    ChangePasswordRequest, CreateUserRequest, LoginRequest, LoginResponse, UpdateUserRequest,
+    UserResponse,
 };
 pub use venta_commands::{
     anular_venta, create_venta, get_all_ventas, get_venta_by_id, get_ventas_por_cliente,
@@ -97,67 +100,6 @@ impl AppState {
     }
 }
 
-#[derive(serde::Deserialize)]
-pub struct CreateUserRequest {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(serde::Deserialize)]
-pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(serde::Deserialize)]
-pub struct UpdateUserRequest {
-    pub id: i64,
-    pub username: String,
-    pub active: bool,
-}
-
-#[derive(serde::Deserialize)]
-pub struct AddPermissionRequest {
-    pub user_id: i64,
-    pub permission_id: i64,
-}
-
-#[derive(serde::Deserialize)]
-pub struct ChangePasswordRequest {
-    pub target_user_id: i64,
-    pub current_password: Option<String>,
-    pub new_password: String,
-}
-
-#[derive(serde::Serialize)]
-pub struct UserResponse {
-    pub id: i64,
-    pub username: String,
-    pub active: bool,
-    pub created_at: String,
-    pub modified_at: String,
-    pub permissions: Vec<String>,
-}
-
-impl From<User> for UserResponse {
-    fn from(user: User) -> Self {
-        Self {
-            id: user.id,
-            username: user.username,
-            active: user.active,
-            created_at: user.created_at.to_rfc3339(),
-            modified_at: user.modified_at.to_rfc3339(),
-            permissions: Vec::new(),
-        }
-    }
-}
-
-#[derive(serde::Serialize)]
-pub struct LoginResponse {
-    pub user: UserResponse,
-    pub permissions: Vec<String>,
-}
-
 #[tauri::command]
 pub async fn ensure_db_ready() -> Result<(), AppError> {
     tauri::async_runtime::spawn_blocking(|| {
@@ -165,252 +107,4 @@ pub async fn ensure_db_ready() -> Result<(), AppError> {
     })
     .await
     .map_err(|e| AppError::Internal(e.to_string()))
-}
-
-#[tauri::command(async)]
-pub fn login(request: LoginRequest, state: State<AppState>) -> Result<LoginResponse, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    let user = service.login(request.username, request.password)?;
-    let permissions = service
-        .get_user_permissions_by_names(user.id)
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-
-    Ok(LoginResponse {
-        user: user.into(),
-        permissions,
-    })
-}
-
-#[tauri::command(async)]
-pub fn create_user(
-    user_id: i64,
-    request: CreateUserRequest,
-    state: State<AppState>,
-) -> Result<UserResponse, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::CreateUser)?;
-    let user = service.create_user(request.username, request.password)?;
-    log_audit(
-        user_id,
-        AuditScreen::Usuarios,
-        AuditAction::Create,
-        Some(format!(
-            "Usuario creado: {} (id {})",
-            user.username, user.id
-        )),
-    )?;
-    Ok(user.into())
-}
-
-#[tauri::command(async)]
-pub fn get_all_users(user_id: i64, state: State<AppState>) -> Result<Vec<UserResponse>, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::ViewUsers)?;
-    let users = service.get_all_users()?;
-    Ok(users.into_iter().map(|u| u.into()).collect())
-}
-
-#[tauri::command(async)]
-pub fn update_user(
-    user_id: i64,
-    request: UpdateUserRequest,
-    state: State<AppState>,
-) -> Result<UserResponse, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::UpdateUser)?;
-    let antes = service.get_user(request.id)?;
-    let user = service.update_user(request.id, request.username, request.active)?;
-    let detail = AuditDetail::new("usuario", format!("{} (id {})", user.username, user.id))
-        .cambio("username", &antes.username, &user.username)
-        .cambio("activo", antes.active, user.active)
-        .to_json();
-    log_audit(
-        user_id,
-        AuditScreen::Usuarios,
-        AuditAction::Update,
-        Some(detail),
-    )?;
-    Ok(user.into())
-}
-
-#[tauri::command(async)]
-pub fn change_password(
-    user_id: i64,
-    request: ChangePasswordRequest,
-    state: State<AppState>,
-) -> Result<UserResponse, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-
-    if user_id != request.target_user_id {
-        check_permission(user_id, PermissionCode::ChangeUserPassword)?;
-    }
-
-    let target = service.get_user(request.target_user_id)?;
-    let user = service.change_password(
-        user_id,
-        request.target_user_id,
-        request.current_password,
-        request.new_password,
-    )?;
-
-    log_audit(
-        user_id,
-        AuditScreen::Usuarios,
-        AuditAction::Update,
-        Some(format!(
-            "Contraseña actualizada para el usuario {} (id {})",
-            target.username, request.target_user_id
-        )),
-    )?;
-    Ok(user.into())
-}
-
-#[tauri::command(async)]
-pub fn delete_user(user_id: i64, id: i64, state: State<AppState>) -> Result<(), AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::DeleteUser)?;
-    let antes = service.get_user(id)?;
-    service.delete_user(user_id, id)?;
-    log_audit(
-        user_id,
-        AuditScreen::Usuarios,
-        AuditAction::Delete,
-        Some(format!("Usuario eliminado: {} (id {})", antes.username, id)),
-    )?;
-    Ok(())
-}
-
-#[tauri::command(async)]
-pub fn add_permission_to_user(
-    user_id: i64,
-    request: AddPermissionRequest,
-    state: State<AppState>,
-) -> Result<(), AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::AssignPermission)?;
-    service.add_permission_to_user(request.user_id, request.permission_id)?;
-    let perm = permission_code_by_id(request.permission_id)?;
-    let target = service.get_user(request.user_id)?;
-    log_audit(
-        user_id,
-        AuditScreen::Permisos,
-        AuditAction::Update,
-        Some(format!(
-            "Permiso {} asignado al usuario {} (id {})",
-            perm, target.username, request.user_id
-        )),
-    )?;
-    Ok(())
-}
-
-#[tauri::command(async)]
-pub fn remove_permission_from_user(
-    user_id: i64,
-    request: AddPermissionRequest,
-    state: State<AppState>,
-) -> Result<(), AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::RemovePermission)?;
-    service.remove_permission_from_user(request.user_id, request.permission_id)?;
-    let perm = permission_code_by_id(request.permission_id)?;
-    let target = service.get_user(request.user_id)?;
-    log_audit(
-        user_id,
-        AuditScreen::Permisos,
-        AuditAction::Update,
-        Some(format!(
-            "Permiso {} quitado al usuario {} (id {})",
-            perm, target.username, request.user_id
-        )),
-    )?;
-    Ok(())
-}
-
-#[tauri::command(async)]
-pub fn get_user_permissions(
-    user_id: i64,
-    target_user_id: i64,
-    state: State<AppState>,
-) -> Result<Vec<UserPermission>, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::ViewPermissions)?;
-    service.get_user_permissions(target_user_id)
-}
-
-#[tauri::command(async)]
-pub fn get_all_permissions(
-    user_id: i64,
-    state: State<AppState>,
-) -> Result<Vec<Permission>, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::ViewPermissions)?;
-    service.get_all_permissions()
-}
-
-#[tauri::command(async)]
-pub fn create_permission(
-    user_id: i64,
-    name: String,
-    state: State<AppState>,
-) -> Result<Permission, AppError> {
-    let service = state
-        .user_service
-        .lock()
-        .map_err(|e| AppError::Internal(e.to_string()))?;
-    check_permission(user_id, PermissionCode::CreateCategoria)?;
-    let permission = service.create_permission(name)?;
-    log_audit(
-        user_id,
-        AuditScreen::Permisos,
-        AuditAction::Create,
-        Some(format!(
-            "Permiso: {} (id {})",
-            permission.permission, permission.id
-        )),
-    )?;
-    Ok(permission)
-}
-
-fn permission_code_by_id(id: i64) -> Result<String, AppError> {
-    let conn = DB.lock().map_err(|e| AppError::Internal(e.to_string()))?;
-
-    let name: String = conn
-        .query_row(
-            "SELECT permission FROM permissions WHERE id = ?1",
-            params![id],
-            |row| row.get(0),
-        )
-        .map_err(|e| AppError::Database(e.to_string()))?;
-
-    Ok(name)
 }
